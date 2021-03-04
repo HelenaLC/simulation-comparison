@@ -1,0 +1,6 @@
+source(args$fun)
+x <- readRDS(args$est)
+if (is.null(x))
+    x <- readRDS(args$sub)
+y <- fun(x)
+saveRDS(y, args$sim)
