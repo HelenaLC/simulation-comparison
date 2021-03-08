@@ -5,22 +5,17 @@ configfile: "config.yaml"
 R = config["R"]
 
 METHODS = json.loads(open("config/methods.json").read())
-METRICS = json.loads(open("config/metrics.json").read())
+# METRICS = json.loads(open("config/metrics.json").read())
 
 
 G_METRICS = glob_wildcards("code/05-gene_qc-{m}.R").m
 C_METRICS = glob_wildcards("code/05-cell_qc-{m}.R").m
+METRICS = G_METRICS + C_METRICS
 TYPE_METRIC = ["gene"] * len(G_METRICS) + ["cell"] * len(C_METRICS)
-# MYMETRICS = list(zip(TYPE_METRIC, G_METRICS + C_METRICS))
 
 
-# expand("{sample}_{id}.txt", zip, sample=["a", "b", "c"], id=["1", "2", "3"])
-# MYMETRICS = glob_wildcards("code/05-{m}_qc-{m}.R").m
-MYMETRICS = G_METRICS + C_METRICS
-# METRIC_TYPE = ["gene", "cell"]
-
-gene_metrics = list(itertools.combinations([m for m in METRICS if "gene_" in m], 2))
-cell_metrics = list(itertools.combinations([m for m in METRICS if "cell_" in m], 2))
+# gene_metrics = list(itertools.combinations([m for m in METRICS if "gene_" in m], 2))
+# cell_metrics = list(itertools.combinations([m for m in METRICS if "cell_" in m], 2))
 
 DATSETS = glob_wildcards("code/00-get_data-{d}.R").d
 SUBSETS = json.loads(open("config/subsets.json").read())
@@ -37,11 +32,10 @@ SUBSETS = {
 RUNS = {
 	"ref":[r for r in REFSETS.keys() for m in METHODS.keys() if REFSETS[r] in METHODS[m]], 
 	"mid":[m for r in REFSETS.keys() for m in METHODS.keys() if REFSETS[r] in METHODS[m]]}
-# mymetrics = expand("results/qc-{refset}-{type}_{metric}", zip, refset=REFSETS, type=TYPE_METRIC, metric=MYMETRICS)
 
-qc_dirs = expand(expand("results/qc-{refset},{{metric}},{method}.rds", zip, 
-	refset = RUNS["ref"], method = RUNS["mid"]), metric = METRICS)
-ks_dirs = expand("results/ks-{refset},{metric}.rds", refset = REFSETS, metric = METRICS)
+# qc_dirs = expand(expand("results/qc-{refset},{{metric}},{method}.rds", zip,
+# 	refset = RUNS["ref"], method = RUNS["mid"]), metric = METRICS)
+# ks_dirs = expand("results/ks-{refset},{metric}.rds", refset = REFSETS, metric = METRICS)
 
 rule all:
 	input:
@@ -59,18 +53,15 @@ rule all:
 		# expand(
 		# 	"results/qc-{refset},{metric}.rds",
 		# 	refset = REFSETS, metric = METRICS),
+		expand(
+			expand("results/qc_ref-{{refset}},{type}_{metric}.rds",
+				zip,type = TYPE_METRIC,metric= METRICS
+			), refset = REFSETS),
+		expand(
+			expand("results/qc_sim-{refset},{{type}}_{{metric}},{method}.rds",
+				zip, refset=RUNS["ref"],method=RUNS["mid"]
+			), zip , type = TYPE_METRIC,metric= METRICS)
 
-
-		expand(expand("results/qc_ref-{{refset}},{type}_{metric}.rds",
-				zip,type = TYPE_METRIC,metric= MYMETRICS
-			), refset = REFSETS)
-
-		#
-		# expand(expand("results/qc-{refset},gene_{{gmetric}},{method}.rds",zip,
-		# 	refset=RUNS["ref"],method=RUNS["mid"]), gmetric = G_METRICS),
-		#
-		# expand(expand("results/qc-{refset},cell_{{cmetric}},{method}.rds",zip,
-		# 	refset=RUNS["ref"],method=RUNS["mid"]), cmetric = C_METRICS)
 
 
  		# qc_dirs, ks_dirs
@@ -151,7 +142,7 @@ rule sim_data:
 	fun={input.fun} sim={output}" {input[0]} {log}'''
 
 # ------------------------------------------------------------------------------
-
+# helenas code
 # rule qc_ref:
 # 	priority: 1
 # 	input:	"code/05-calc_qc.R",
@@ -174,28 +165,6 @@ rule sim_data:
 # 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 # 	sce={input.sce} fun={params.fun} res={output}" {input[0]} {log}'''
 
-
-rule qc_sim_gene:
-	priority: 1
-	input: "code/05-gene_qc-{gmetric}.R",
-			sce = rules.sim_data.output
-	output: "results/qc-{refset},gene_{gmetric},{method}.rds"
-	log:    "logs/05-qc_sim-{refset},gene_{gmetric},{method}.Rout"
-	shell:    '''
-	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	sce={input.sce} res={output}" {input[0]} {log}'''
-
-rule qc_sim_cell:
-	priority: 1
-	input: "code/05-cell_qc-{cmetric}.R",
-			sce = rules.sim_data.output
-	output: "results/qc-{refset},cell_{cmetric},{method}.rds"
-	log:    "logs/05-qc_sim-{refset},cell_{cmetric},{method}.Rout"
-	shell:    '''
-	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	sce={input.sce} res={output}" {input[0]} {log}'''
-
-
 rule qc_ref:
 	priority: 1
 	input: "code/05-{type}_qc-{metric}.R",
@@ -206,7 +175,14 @@ rule qc_ref:
 	{R} CMD BATCH --no-restore --no-save "--args sce={input.sce} res={output}" {input[0]} {log}
 	'''
 
-
+rule qc_sim:
+	input: "code/05-{type}_qc-{metric}.R",
+			sce = rules.sim_data.output
+	output: "results/qc_sim-{refset},{type}_{metric},{method}.rds"
+	log: "logs/05-qc_sim-{refset},{type}_{metric},{method}.Rout"
+	shell: '''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+	sce={input.sce} res={output}" {input[0]} {log}'''
 
 
 #
