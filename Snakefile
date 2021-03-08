@@ -63,7 +63,14 @@ rule all:
 		expand("results/qc_ref-{refset},gene_{gmetric}.rds",
 			refset = REFSETS, gmetric = G_METRICS),
 		expand("results/qc_ref-{refset},cell_{cmetric}.rds",
-	 		refset = REFSETS, cmetric = C_METRICS) # ,
+	 		refset = REFSETS, cmetric = C_METRICS) ,
+
+		expand(expand("results/qc-{refset},gene_{{gmetric}},{method}.rds",zip,
+			refset=RUNS["ref"],method=RUNS["mid"]), gmetric = G_METRICS),
+
+		expand(expand("results/qc-{refset},cell_{{cmetric}},{method}.rds",zip,
+			refset=RUNS["ref"],method=RUNS["mid"]), cmetric = C_METRICS)
+
 
  		# qc_dirs, ks_dirs
 # 		expand(expand(
@@ -154,23 +161,44 @@ rule sim_data:
 # 	shell: 	'''
 # 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 # 	sce={input.sce} fun={params.fun} res={output}" {input[0]} {log}'''
+#
+# rule qc_sim:
+# 	priority: 1
+# 	input:	"code/05-calc_qc.R",
+# 			sce = rules.sim_data.output
+# 	params: fun = lambda wc: METRICS[wc.metric]["fun"].replace(" ", "")
+# 	output:	"results/qc-{refset},{metric},{method}.rds"
+# 	log:	"logs/05-qc_sim-{refset},{metric},{method}.Rout"
+# 	shell: 	'''
+# 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+# 	sce={input.sce} fun={params.fun} res={output}" {input[0]} {log}'''
 
-rule qc_sim:
+
+rule qc_sim_gene:
 	priority: 1
-	input:	"code/05-calc_qc.R",
+	input: "code/05-gene_qc-{gmetric}.R",
 			sce = rules.sim_data.output
-	params: fun = lambda wc: METRICS[wc.metric]["fun"].replace(" ", "")
-	output:	"results/qc-{refset},{metric},{method}.rds"
-	log:	"logs/05-qc_sim-{refset},{metric},{method}.Rout"
-	shell: 	'''
+	output: "results/qc-{refset},gene_{gmetric},{method}.rds"
+	log:    "logs/05-qc_sim-{refset},gene_{gmetric},{method}.Rout"
+	shell:    '''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	sce={input.sce} fun={params.fun} res={output}" {input[0]} {log}'''
+	sce={input.sce} res={output}" {input[0]} {log}'''
+
+rule qc_sim_cell:
+	priority: 1
+	input: "code/05-cell_qc-{cmetric}.R",
+			sce = rules.sim_data.output
+	output: "results/qc-{refset},cell_{cmetric},{method}.rds"
+	log:    "logs/05-qc_sim-{refset},cell_{cmetric},{method}.Rout"
+	shell:    '''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+	sce={input.sce} res={output}" {input[0]} {log}'''
 
 
 rule qc_ref_gene:
 	priority: 1
 	input: "code/05-gene_qc-{gmetric}.R",
-			sce = "data/02-sub/{refset}.rds",
+			sce = "data/02-sub/{refset}.rds"
 	output: "results/qc_ref-{refset},gene_{gmetric}.rds"
 	log: "logs/05-qc_ref-{refset},{gmetric}.Rout"
 	shell: '''
@@ -181,15 +209,15 @@ rule qc_ref_gene:
 rule qc_ref_cell:
 	priority: 1
 	input: "code/05-cell_qc-{cmetric}.R",
-			sce = "data/02-sub/{refset}.rds",
+			sce = "data/02-sub/{refset}.rds"
 	output: "results/qc_ref-{refset},cell_{cmetric}.rds"
 	log: "logs/05_qc_ref-{refset},cell_{cmetric}.Rout"
 	shell: '''
 	{R} CMD BATCH --no-restore --no-save "--args sce={input.sce} res={output}" {input[0]} {log}
 	'''
 
-# try to combine the above rules
-# rule qc_ref_all:
+# TODO try to combine the above rules
+# rule qc_ref:
 # 	priority: 1
 # 	input: "code/05-{type_metric[0]}_qc-{type_metric[1]}.R",
 # 			sce = "data/02-sub/{refset}.rds",
@@ -198,6 +226,8 @@ rule qc_ref_cell:
 # 	shell: '''
 # 	{R} CMD BATCH --no-restore --no-save "--args sce={input.sce} res={output}" {input[0]} {log}
 # 	'''
+
+
 
 #
 #
