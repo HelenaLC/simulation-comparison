@@ -10,13 +10,13 @@ METRICS = json.loads(open("config/metrics.json").read())
 
 G_METRICS = glob_wildcards("code/05-gene_qc-{m}.R").m
 C_METRICS = glob_wildcards("code/05-cell_qc-{m}.R").m
-# TYPE_METRIC = ["gene"] * len(G_METRICS) + ["cell"] * len(C_METRICS)
+TYPE_METRIC = ["gene"] * len(G_METRICS) + ["cell"] * len(C_METRICS)
 # MYMETRICS = list(zip(TYPE_METRIC, G_METRICS + C_METRICS))
 
 
 # expand("{sample}_{id}.txt", zip, sample=["a", "b", "c"], id=["1", "2", "3"])
 # MYMETRICS = glob_wildcards("code/05-{m}_qc-{m}.R").m
-# MYMETRICS = G_METRICS + C_METRICS
+MYMETRICS = G_METRICS + C_METRICS
 # METRIC_TYPE = ["gene", "cell"]
 
 gene_metrics = list(itertools.combinations([m for m in METRICS if "gene_" in m], 2))
@@ -56,20 +56,21 @@ rule all:
 		expand(
 			"data/04-sim/{refset},{method}.rds", zip,
 			refset = RUNS["ref"], method = RUNS["mid"]),
-		expand(
-			"results/qc-{refset},{metric}.rds",
-			refset = REFSETS, metric = METRICS),
+		# expand(
+		# 	"results/qc-{refset},{metric}.rds",
+		# 	refset = REFSETS, metric = METRICS),
 
-		expand("results/qc_ref-{refset},gene_{gmetric}.rds",
-			refset = REFSETS, gmetric = G_METRICS),
-		expand("results/qc_ref-{refset},cell_{cmetric}.rds",
-	 		refset = REFSETS, cmetric = C_METRICS) ,
 
-		expand(expand("results/qc-{refset},gene_{{gmetric}},{method}.rds",zip,
-			refset=RUNS["ref"],method=RUNS["mid"]), gmetric = G_METRICS),
+		expand(expand("results/qc_ref-{{refset}},{type}_{metric}.rds",
+				zip,type = TYPE_METRIC,metric= MYMETRICS
+			), refset = REFSETS)
 
-		expand(expand("results/qc-{refset},cell_{{cmetric}},{method}.rds",zip,
-			refset=RUNS["ref"],method=RUNS["mid"]), cmetric = C_METRICS)
+		#
+		# expand(expand("results/qc-{refset},gene_{{gmetric}},{method}.rds",zip,
+		# 	refset=RUNS["ref"],method=RUNS["mid"]), gmetric = G_METRICS),
+		#
+		# expand(expand("results/qc-{refset},cell_{{cmetric}},{method}.rds",zip,
+		# 	refset=RUNS["ref"],method=RUNS["mid"]), cmetric = C_METRICS)
 
 
  		# qc_dirs, ks_dirs
@@ -195,37 +196,16 @@ rule qc_sim_cell:
 	sce={input.sce} res={output}" {input[0]} {log}'''
 
 
-rule qc_ref_gene:
+rule qc_ref:
 	priority: 1
-	input: "code/05-gene_qc-{gmetric}.R",
+	input: "code/05-{type}_qc-{metric}.R",
 			sce = "data/02-sub/{refset}.rds"
-	output: "results/qc_ref-{refset},gene_{gmetric}.rds"
-	log: "logs/05-qc_ref-{refset},{gmetric}.Rout"
+	output: "results/qc_ref-{refset},{type}_{metric}.rds"
+	log: "logs/05_qc_ref-{refset},{type}_{metric}.Rout"
 	shell: '''
 	{R} CMD BATCH --no-restore --no-save "--args sce={input.sce} res={output}" {input[0]} {log}
 	'''
 
-
-rule qc_ref_cell:
-	priority: 1
-	input: "code/05-cell_qc-{cmetric}.R",
-			sce = "data/02-sub/{refset}.rds"
-	output: "results/qc_ref-{refset},cell_{cmetric}.rds"
-	log: "logs/05_qc_ref-{refset},cell_{cmetric}.Rout"
-	shell: '''
-	{R} CMD BATCH --no-restore --no-save "--args sce={input.sce} res={output}" {input[0]} {log}
-	'''
-
-# TODO try to combine the above rules
-# rule qc_ref:
-# 	priority: 1
-# 	input: "code/05-{type_metric[0]}_qc-{type_metric[1]}.R",
-# 			sce = "data/02-sub/{refset}.rds",
-# 	output: "results/hallo_qc_ref-{refset},{type_metric[0]}_{type_metric[1]}.rds"
-# 	log: "logs/05_qc_ref-qc_ref-{refset},{type_metric[0]}_{type_metric[1]}.rds.Rout"
-# 	shell: '''
-# 	{R} CMD BATCH --no-restore --no-save "--args sce={input.sce} res={output}" {input[0]} {log}
-# 	'''
 
 
 
