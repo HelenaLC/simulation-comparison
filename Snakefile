@@ -7,6 +7,9 @@ R = config["R"]
 METHODS = json.loads(open("config/methods.json").read())
 METRICS = json.loads(open("config/metrics.json").read())
 
+G_METRICS = glob_wildcards("code/05-gene_qc-{m}.R").m
+# C_METRICS
+
 gene_metrics = list(itertools.combinations([m for m in METRICS if "gene_" in m], 2))
 cell_metrics = list(itertools.combinations([m for m in METRICS if "cell_" in m], 2))
 
@@ -32,31 +35,35 @@ ks_dirs = expand("results/ks-{refset},{metric}.rds", refset = REFSETS, metric = 
 
 rule all:
 	input:
-		expand("data/00-raw/{datset}.rds", datset = DATSETS)
-		# expand("data/01-fil/{datset}.rds", datset = DATSETS),
-		# expand(
-		# 	"data/02-sub/{datset},{subset}.rds", zip, 
-		# 	datset = SUBSETS["dat"], subset = SUBSETS["sub"]),
-		# expand(
-		# 	"data/03-est/{refset},{method}.rds", zip, 
-		# 	refset = RUNS["ref"], method = RUNS["mid"]),
-		# expand(
-		# 	"data/04-sim/{refset},{method}.rds", zip, 
-		# 	refset = RUNS["ref"], method = RUNS["mid"]),
-		# expand(
-		# 	"results/qc-{refset},{metric}.rds", 
-		# 	refset = REFSETS, metric = METRICS),
-		# qc_dirs, ks_dirs
-		# expand(expand(
-		# 	"results/dy-{{refset}},{metric1},{metric2}.rds", zip,
-		# 	metric1 = [m[0] for m in gene_metrics], 
-		# 	metric2 = [m[1] for m in gene_metrics]),
-		# 	refset = REFSETS),
-		# expand(expand(
-		# 	"results/dy-{{refset}},{metric1},{metric2}.rds", zip,
-		# 	metric1 = [m[0] for m in cell_metrics], 
-		# 	metric2 = [m[1] for m in cell_metrics]),
-		# 	refset = REFSETS),
+		expand("data/00-raw/{datset}.rds", datset = DATSETS),
+		expand("data/01-fil/{datset}.rds", datset = DATSETS),
+		expand(
+			"data/02-sub/{datset},{subset}.rds", zip,
+			datset = SUBSETS["dat"], subset = SUBSETS["sub"]),
+		expand(
+			"data/03-est/{refset},{method}.rds", zip,
+			refset = RUNS["ref"], method = RUNS["mid"]),
+		expand(
+			"data/04-sim/{refset},{method}.rds", zip,
+			refset = RUNS["ref"], method = RUNS["mid"]),
+		expand(
+			"results/qc-{refset},{metric}.rds",
+			refset = REFSETS, metric = METRICS),
+
+		expand("results/qc_ref-{refset},{gmetric}.rds",
+			refset=REFSETS, gmetric = G_METRICS)#,
+
+ 		# qc_dirs, ks_dirs
+# 		expand(expand(
+# 			"results/dy-{{refset}},{metric1},{metric2}.rds", zip,
+# 			metric1 = [m[0] for m in gene_metrics],
+# 			metric2 = [m[1] for m in gene_metrics]),
+# 			refset = REFSETS)#,
+# 		expand(expand(
+# 			"results/dy-{{refset}},{metric1},{metric2}.rds", zip,
+# 			metric1 = [m[0] for m in cell_metrics],
+# 			metric2 = [m[1] for m in cell_metrics]),
+# 			refset = REFSETS),
 		# expand(expand(
 		# 	"plots/dy-{{refset}},{metric1},{metric2}.pdf", zip,
 		# 	metric1 = [m[0] for m in gene_metrics], 
@@ -125,16 +132,16 @@ rule sim_data:
 
 # ------------------------------------------------------------------------------
 
-rule qc_ref:
-	priority: 1
-	input:	"code/05-calc_qc.R",
-			sce = "data/02-sub/{refset}.rds",
-	params: fun = lambda wc: METRICS[wc.metric]["fun"].replace(" ", "")
-	output:	"results/qc-{refset},{metric}.rds"
-	log:	"logs/05-qc_ref-{refset},{metric}.Rout"
-	shell: 	'''
-	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	sce={input.sce} fun={params.fun} res={output}" {input[0]} {log}'''
+# rule qc_ref:
+# 	priority: 1
+# 	input:	"code/05-calc_qc.R",
+# 			sce = "data/02-sub/{refset}.rds",
+# 	params: fun = lambda wc: METRICS[wc.metric]["fun"].replace(" ", "")
+# 	output:	"results/qc-{refset},{metric}.rds"
+# 	log:	"logs/05-qc_ref-{refset},{metric}.Rout"
+# 	shell: 	'''
+# 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+# 	sce={input.sce} fun={params.fun} res={output}" {input[0]} {log}'''
 
 rule qc_sim:
 	priority: 1
@@ -146,6 +153,18 @@ rule qc_sim:
 	shell: 	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	sce={input.sce} fun={params.fun} res={output}" {input[0]} {log}'''
+
+
+rule qc_ref:
+	priority: 1
+	input: "code/05-gene_qc-{gmetric}.R",
+			sce = "data/02-sub/{refset}.rds",
+	output: "results/qc_ref-{refset},{gmetric}.rds"
+	log: "logs/05-qc_ref-{refset},{gmetric}.Rout"
+	shell: '''
+	{R} CMD BATCH --no-restore --no-save "--args sce={input.sce} res={output}" {input[0]} {log}
+	'''
+
 
 rule calc_ks:
 	input:	"code/05-calc_ks.R",
