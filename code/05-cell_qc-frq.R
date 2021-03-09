@@ -12,6 +12,6 @@ suppressPackageStartupMessages({
 x <- readRDS(args$sce)
 qc <- colMeans(counts(x) != 0)
 
-qc_res <- data.frame(metaData = colData(x), qc = qc)
+qc_res <- data.frame(colData(x), qc = qc)
 
 saveRDS(qc_res, args$res)
