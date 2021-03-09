@@ -1,6 +1,7 @@
 suppressPackageStartupMessages({
   library(SingleCellExperiment)
   library(dplyr)
+  library(purrr)
 })
 
 # setwd("~/Desktop/LabRotation_Robinson/simulation-comparison")
@@ -10,8 +11,9 @@ suppressPackageStartupMessages({
 # wcs <- list(metric = "gene_frq")
 
 x <- readRDS(args$sce)
-qc <- colMeans(counts(x) != 0)
 
-qc_res <- data.frame(colData(x), qc = qc)
+qc_func <- function(x){return(colMeans(counts(x) != 0))}
 
-saveRDS(qc_res, args$res)
+qc <- .calc_qc_for_splits(x=x, metric_name="cell_frq", FUN=qc_func) 
+
+saveRDS(qc, args$res)

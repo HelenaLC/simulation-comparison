@@ -35,7 +35,16 @@ RUNS = {
 
 # qc_dirs = expand(expand("results/qc-{refset},{{metric}},{method}.rds", zip,
 # 	refset = RUNS["ref"], method = RUNS["mid"]), metric = METRICS)
-# ks_dirs = expand("results/ks-{refset},{metric}.rds", refset = REFSETS, metric = METRICS)
+#ks_dirs = expand("results/ks-{refset},{metric}.rds", refset = REFSETS, metric = METRICS)
+
+
+ks_dirs = expand(
+			expand("results/ks-{refset},{{type}}_{{metric}}.rds",refset= REFSETS),
+			zip, type = TYPE_METRIC,metric= METRICS)
+qc_sim_dirs= expand(
+				expand("results/qc_sim-{refset},{{type}}_{{metric}},{method}.rds",
+				zip, refset=RUNS["ref"],method=RUNS["mid"]
+			), zip , type = TYPE_METRIC,metric= METRICS)
 
 rule all:
 	input:
@@ -57,12 +66,12 @@ rule all:
 			expand("results/qc_ref-{{refset}},{type}_{metric}.rds",
 				zip,type = TYPE_METRIC,metric= METRICS
 			), refset = REFSETS),
-		expand(
-			expand("results/qc_sim-{refset},{{type}}_{{metric}},{method}.rds",
-				zip, refset=RUNS["ref"],method=RUNS["mid"]
-			), zip , type = TYPE_METRIC,metric= METRICS)
-
-
+		qc_sim_dirs,
+		ks_dirs
+		# expand(
+		# 	expand("results/qc_sim-{refset},{{type}}_{{metric}},{method}.rds",
+		# 		zip, refset=RUNS["ref"],method=RUNS["mid"]
+		# 	), zip , type = TYPE_METRIC,metric= METRICS),
 
  		# qc_dirs, ks_dirs
 # 		expand(expand(
@@ -184,9 +193,19 @@ rule qc_sim:
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	sce={input.sce} res={output}" {input[0]} {log}'''
 
+rule calc_ks:
+	input: "code/05-calc_ks_adapted.R",
+			ref = rules.qc_ref.output,
+			sim = lambda wc: [x for x in qc_sim_dirs \
+				if "{},{}_{}".format(wc.refset,wc.type, wc.metric) in x] # {refset},{{type}}_{{metric}}
+	params: lambda wc, input: ";".join(input.sim)
+	output: "results/ks-{refset},{type}_{metric}.rds"
+	log: "logs/05-calc_ks-{refset},{type}_{metric}.Rout"
+	shell: '''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+	ref={input.ref} sim={params} res={output}" {input[0]} {log}'''
 
-#
-#
+
 # rule calc_ks:
 # 	input:	"code/05-calc_ks.R",
 # 			ref = rules.qc_ref.output,
