@@ -1,5 +1,7 @@
 suppressPackageStartupMessages({
   library(scater)
+  library(purrr)
+  library(dplyr)
   library(SingleCellExperiment)
 })
 
@@ -12,6 +14,9 @@ suppressPackageStartupMessages({
 x <- readRDS(args$sce)
 cpm <- calculateCPM(x)
 assay(x, "cpm") <- cpm
-qc <- rowMeans(log(cpm(x) + 1))
+
+qc_func <- function(x){return(rowMeans(log(cpm(x) + 1) ))}
+
+qc <- .calc_qc_for_splits(x=x, metric_name="gene_avg", FUN=qc_func) 
 
 saveRDS(qc, args$res)

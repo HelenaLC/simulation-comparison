@@ -105,6 +105,31 @@
     map_depth(cd, length(by), "i")
 }
 
+# split genes by group = "cluster","batch", "sample". 
+# Then per group calculate the qc with the FUN function(which is a metric)
+# returns a dataframe with cols:  group | id | metric_name
+.calc_qc_for_splits <- function(x, metric_name, FUN){
+    
+    i <- c("cluster", "sample", "batch")
+    names(i) <- i <- intersect(i, names(colData(x)))
+    cs <- c(
+        list(global = list(foo = TRUE)), 
+        lapply(i, function(.) split(seq(ncol(x)), x[[.]])))
+    
+    res <- map_depth(cs, 2, function(.) {
+        df <- data.frame(
+            FUN(x[, .]), 
+            row.names = NULL)
+        names(df) <- metric_name
+        return(df)
+    })
+    
+    res <- map_depth(res, 1, bind_rows, .id = "id")
+    res <- bind_rows(res, .id = "group")
+    
+    return(res)
+}
+
 # + globals ----
 
 cats <- c("ee", "ep", "de", "dp", "dm", "db")

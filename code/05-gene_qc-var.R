@@ -2,6 +2,8 @@ suppressPackageStartupMessages({
   library(scater)
   library(matrixStats)
   library(SingleCellExperiment)
+  library(purrr)
+  library(dplyr)
 })
 
 # setwd("~/Desktop/LabRotation_Robinson/simulation-comparison")
@@ -13,6 +15,10 @@ suppressPackageStartupMessages({
 x <- readRDS(args$sce)
 cpm <- calculateCPM(x)
 assay(x, "cpm") <- cpm
-qc <- matrixStats::rowVars(as.matrix(log(cpm(x) + 1))) 
+
+qc_func <- function(x){return(rowVars(as.matrix(log(cpm(x) + 1))))}
+
+qc <- .calc_qc_for_splits(x=x, metric_name="gene_var", FUN=qc_func) 
+
 
 saveRDS(qc, args$res)
