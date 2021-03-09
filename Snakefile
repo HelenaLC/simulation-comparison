@@ -67,11 +67,10 @@ rule all:
 				zip,type = TYPE_METRIC,metric= METRICS
 			), refset = REFSETS),
 		qc_sim_dirs,
-		ks_dirs
-		# expand(
-		# 	expand("results/qc_sim-{refset},{{type}}_{{metric}},{method}.rds",
-		# 		zip, refset=RUNS["ref"],method=RUNS["mid"]
-		# 	), zip , type = TYPE_METRIC,metric= METRICS),
+		ks_dirs,
+		expand("plots/ks_sum.pdf"),
+		expand("plots/ks.pdf")
+
 
  		# qc_dirs, ks_dirs
 # 		expand(expand(
@@ -238,15 +237,25 @@ rule calc_ks:
 #
 # # ------------------------------------------------------------------------------
 #
-# rule plot_ks_summary:
-# 	input:	"code/06-plot_ks_summary.R",
-# 			res = ks_dirs
-# 	params: lambda wc, input: ";".join(input.res)
-# 	output:	"plots/ks.pdf"
-# 	log:	"logs/06-plot_ks.Rout"
-# 	shell: 	'''
-# 	{R} CMD BATCH --no-restore --no-save "--args\
-# 	res={params} fig={output}" {input[0]} {log}'''
+rule plot_ks_sum:
+	input: "code/06-plot_ks_sum.R",
+			res = ks_dirs
+	params: lambda wc, input: ";".join(input.res)
+	output: "plots/ks_sum.pdf"
+	log: "logs/06-plot_ks_sum.Rout"
+	shell: '''
+	{R} CMD BATCH --no-restore --no-save "--args\
+	res={params} fig={output}" {input[0]} {log}'''
+
+rule plot_ks_summary:
+	input:	"code/06-plot_ks_summary.R",
+			res = ks_dirs
+	params: lambda wc, input: ";".join(input.res)
+	output:	"plots/ks.pdf"
+	log:	"logs/06-plot_ks.Rout"
+	shell: 	'''
+	{R} CMD BATCH --no-restore --no-save "--args\
+	res={params} fig={output}" {input[0]} {log}'''
 #
 # rule plot_dy:
 # 	input:	"code/06-plot_dy.R",
