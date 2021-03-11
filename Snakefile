@@ -67,7 +67,7 @@ rule all:
 				zip,type = TYPE_METRIC,metric= METRICS
 			), refset = REFSETS),
 		expand(
-			expand("plots/plot-test-{{refset}},{type}_{metric}.pdf",
+			expand("plots/qc_{{refset}},{type}_{metric}.pdf",
 				zip,type=TYPE_METRIC,metric=METRICS
 				), refset = REFSETS),
 		qc_sim_dirs,
@@ -214,8 +214,8 @@ rule plot_qc:
 			sim = lambda wc: [x for x in qc_sim_dirs \
 			  if "{},{}_{}".format(wc.refset,wc.type,wc.metric) in x]
 	params: lambda wc, input: ";".join(input.sim)
-	output: "plots/plot-test-{refset},{type}_{metric}.pdf"
-	log: "logs/05-plot-test-{refset},{type}_{metric}.Rout"
+	output: "plots/qc_{refset},{type}_{metric}.pdf"
+	log: "logs/05-plot_qc-{refset},{type}_{metric}.Rout"
 	shell: '''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	ref={input.ref} sim={params} fig={output}" {input[0]} {log}'''
