@@ -68,7 +68,7 @@ rule all:
 			), refset = REFSETS),
 		qc_sim_dirs,
 		ks_dirs,
-		expand("plots/ks_sum.pdf"),
+		expand("plots/ks_summary_{refset}.pdf", refset=REFSETS),
 		expand("plots/ks.pdf")
 
 
@@ -241,10 +241,10 @@ rule plot_ks_sum:
 	input: "code/06-plot_ks_sum.R",
 			res = ks_dirs
 	params: lambda wc, input: ";".join(input.res)
-	output: "plots/ks_sum.pdf"
-	log: "logs/06-plot_ks_sum.Rout"
+	output: "plots/ks_summary_{refset}.pdf"
+	log: "logs/06-plot_ks_summary_{refset}.Rout"
 	shell: '''
-	{R} CMD BATCH --no-restore --no-save "--args\
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	res={params} fig={output}" {input[0]} {log}'''
 
 rule plot_ks_summary:
