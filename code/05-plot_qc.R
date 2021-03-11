@@ -4,19 +4,26 @@ suppressPackageStartupMessages({
     library(ggplot2)
     library(purrr)
 })
+metric_str = paste0(wcs$type, '_', wcs$metric)
+# pat <- sprintf(".*,(.*),%s\\.rds", wcs$metric)
+pat <- sprintf(".*,%s,", metric_str)
 
-pat <- sprintf(".*,(.*),%s\\.rds", wcs$metric)
 ids <- gsub(pat, "\\1", basename(args$sim))
-lab <- fromJSON(args$con)[[wcs$metric]]$lab
+ids <- gsub(".rds", "\\1", ids)
+ids
+# lab <- fromJSON(args$con)[[wcs$metric]]$lab
+lab <- metric_str
 
 res <- lapply(c(args$ref, args$sim), readRDS)
+
+
 names(res) <- c("reference", ids)
 df <- bind_rows(res, .id = "method")
 df$method <- factor(df$method, names(.pal))
 
 ps <- group_by(df, group, id) %>% 
     group_map(.keep = TRUE, ~{
-        ggplot(.x, aes_string(wcs$metric,
+        ggplot(.x, aes_string(metric_str,
             "..density../max(..density..)", col = "method")) +
             geom_density(key_glyph = "point") +
             scale_color_manual(values = .pal) +
@@ -28,5 +35,6 @@ ps <- group_by(df, group, id) %>%
             "level: ", .x$group[1], ", group: ", .x$id[1]))
     })
 
-pdf(args$fig, width = 7/2.54, height = 4/2.54, onefile = TRUE)
+# pdf(args$fig, width = 7/2.54, height = 4/2.54, onefile = TRUE)
+pdf(args$fig, width = 7, height = 5, onefile = TRUE)
 for (p in ps) print(p); dev.off()

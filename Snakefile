@@ -66,6 +66,10 @@ rule all:
 			expand("results/qc_ref-{{refset}},{type}_{metric}.rds",
 				zip,type = TYPE_METRIC,metric= METRICS
 			), refset = REFSETS),
+		expand(
+			expand("plots/plot-test-{{refset}},{type}_{metric}.pdf",
+				zip,type=TYPE_METRIC,metric=METRICS
+				), refset = REFSETS),
 		qc_sim_dirs,
 		ks_dirs,
 		expand("plots/ks_summary_{refset}.pdf", refset=REFSETS),
@@ -204,6 +208,18 @@ rule calc_ks:
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	ref={input.ref} sim={params} res={output}" {input[0]} {log}'''
 
+rule plot_qc:
+	input: "code/05-plot_qc.R",
+			ref = rules.qc_ref.output,
+			sim = lambda wc: [x for x in qc_sim_dirs \
+			  if "{},{}_{}".format(wc.refset,wc.type,wc.metric) in x]
+	params: lambda wc, input: ";".join(input.sim)
+	output: "plots/plot-test-{refset},{type}_{metric}.pdf"
+	log: "logs/05-plot-test-{refset},{type}_{metric}.Rout"
+	shell: '''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+	ref={input.ref} sim={params} fig={output}" {input[0]} {log}'''
+
 
 # rule calc_ks:
 # 	input:	"code/05-calc_ks.R",
@@ -235,7 +251,7 @@ rule calc_ks:
 # 	x_sim={params.x_sim} y_sim={params.y_sim}\
 # 	res={output}" {input[0]} {log}'''
 #
-# # ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 #
 rule plot_ks_sum:
 	input: "code/06-plot_ks_sum.R",
@@ -256,7 +272,10 @@ rule plot_ks_summary:
 	shell: 	'''
 	{R} CMD BATCH --no-restore --no-save "--args\
 	res={params} fig={output}" {input[0]} {log}'''
-#
+
+
+
+
 # rule plot_dy:
 # 	input:	"code/06-plot_dy.R",
 # 			res = rules.calc_dy.output
