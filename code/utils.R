@@ -7,7 +7,8 @@
     BASiCS = "maroon",
     SPsimSeq = "tomato",
     splatter = "orange",
-    scDesign = "gold")
+    scDesign = "gold",
+    SymSim = "green")
 
 # theme for quality control plots
 .prettify <- function(theme = NULL, ...) 

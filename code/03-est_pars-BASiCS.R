@@ -8,8 +8,8 @@ fun <- function(x) {
         foo <- capture.output({
             x$BatchInfo <- as.numeric(x$batch)
             mcmc <- BASiCS_MCMC(Data = x,
-                N = 500, Thin = 10, Burn = 10,
-                Regression = TRUE, WithSpikes = FALSE)
+                                N = 500, Thin = 10, Burn = 10,
+                                Regression = TRUE, WithSpikes = FALSE)
         })
     })
     mcmc <- Summary(mcmc)
