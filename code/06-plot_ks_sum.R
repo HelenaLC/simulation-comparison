@@ -36,12 +36,11 @@ ns <- vapply(res, nrow, numeric(1))
  
  p <- ggplot(df, aes(x=x_label, y= stat, color=method)) +
    geom_point()+
-   scale_y_reverse()+
+   scale_y_reverse("KS statistic", limits = c(1,0), breaks=c(0,0.5,1))+
    facet_grid(vars(metric), scale ="fixed") +
    theme(axis.text.x = element_text(angle = 90)) +
    xlab(element_blank())+
-   ylab("KS statistic")+
    ggtitle(this_refset)
-
-
-ggsave(args$fig, p,width = 15, height = 20, units = "cm")
+print("it did go ggplot")
+ggsave(args$fig, p, width = 15, height = 20, units = "cm")
+print("it saved")
