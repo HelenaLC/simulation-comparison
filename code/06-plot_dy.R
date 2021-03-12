@@ -7,8 +7,9 @@ suppressPackageStartupMessages({
 # args <- list(res = "results/dy-CellBench,H1975,cell_frq,cell_lls.rds")
 # wcs <- list(metric1 = "cell_frq", metric2 = "cell_lls")
 
-con <- fromJSON("config/metrics.json")
-labs <- map(con[unlist(wcs)], "lab")
+# con <- fromJSON("config/metrics.json")
+# labs <- map(con[unlist(wcs)], "lab")
+labs <- c(paste0(wcs$type, '_', wcs$metric1), paste0(wcs$type, '_', wcs$metric2))
 
 df <- readRDS(args$res)
 p <- ggplot(df, aes(x, dy, col = method)) +

@@ -13,6 +13,8 @@ C_METRICS = glob_wildcards("code/05-cell_qc-{m}.R").m
 METRICS = G_METRICS + C_METRICS
 TYPE_METRIC = ["gene"] * len(G_METRICS) + ["cell"] * len(C_METRICS)
 
+gene_metrics_combi = list(itertools.combinations(G_METRICS, 2))
+cell_metrics_combi = list(itertools.combinations(C_METRICS, 2))
 
 # gene_metrics = list(itertools.combinations([m for m in METRICS if "gene_" in m], 2))
 # cell_metrics = list(itertools.combinations([m for m in METRICS if "cell_" in m], 2))
@@ -72,9 +74,36 @@ rule all:
 				), refset = REFSETS),
 		qc_sim_dirs,
 		ks_dirs,
-		expand("plots/ks_summary_{refset}.pdf", refset=REFSETS),
-		expand("plots/ks.pdf")
 
+		expand("plots/ks_summary_{refset}.pdf", refset=REFSETS),
+		expand("plots/ks.pdf"),
+		expand(
+			expand("results/dy-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
+				metric1 = [m[0] for m in gene_metrics_combi],
+				metric2 = [m[1] for m in gene_metrics_combi],
+			),type = ['gene'],
+			 refset = REFSETS),
+
+		expand(
+			expand("results/dy-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
+				metric1 = [m[0] for m in cell_metrics_combi],
+				metric2 = [m[1] for m in cell_metrics_combi]
+			),type = ['cell'],
+			 refset = REFSETS),
+		expand(
+			expand("plots/dy-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.pdf", zip,
+				metric1 = [m[0] for m in gene_metrics_combi],
+				metric2 = [m[1] for m in gene_metrics_combi]
+			),type = ['gene'],
+			refset = REFSETS),
+		expand(
+			expand("plots/dy-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.pdf", zip,
+				metric1 = [m[0] for m in cell_metrics_combi],
+				metric2 = [m[1] for m in cell_metrics_combi]
+			),type = ['cell'],
+	 		refset = REFSETS),
+
+	# "plots/dy-{refset},{type}_{metric1},{type}_{metric2}.pdf"
 
  		# qc_dirs, ks_dirs
 # 		expand(expand(
@@ -208,17 +237,6 @@ rule calc_ks:
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	ref={input.ref} sim={params} res={output}" {input[0]} {log}'''
 
-rule plot_qc:
-	input: "code/05-plot_qc.R",
-			ref = rules.qc_ref.output,
-			sim = lambda wc: [x for x in qc_sim_dirs \
-			  if "{},{}_{}".format(wc.refset,wc.type,wc.metric) in x]
-	params: lambda wc, input: ";".join(input.sim)
-	output: "plots/qc_{refset},{type}_{metric}.pdf"
-	log: "logs/05-plot_qc-{refset},{type}_{metric}.Rout"
-	shell: '''
-	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	ref={input.ref} sim={params} fig={output}" {input[0]} {log}'''
 
 
 # rule calc_ks:
@@ -251,6 +269,24 @@ rule plot_qc:
 # 	x_sim={params.x_sim} y_sim={params.y_sim}\
 # 	res={output}" {input[0]} {log}'''
 #
+rule calc_dy:
+	input:	"code/05-calc_dy_adapted.R",
+			x_ref = "results/qc_ref-{refset},{type}_{metric1}.rds",
+			y_ref = "results/qc_ref-{refset},{type}_{metric2}.rds",
+			x_sim = lambda wc: [x for x in qc_sim_dirs \
+				if "{},{}_{}".format(wc.refset,wc.type, wc.metric1) in x],
+			y_sim = lambda wc: [x for x in qc_sim_dirs \
+				if "{},{}_{}".format(wc.refset,wc.type, wc.metric2) in x]
+	params: x_sim = lambda wc, input: ";".join(input.x_sim),
+			y_sim = lambda wc, input: ";".join(input.y_sim)
+	output:	"results/dy-{refset},{type}_{metric1},{type}_{metric2}.rds"
+	log:	"logs/05-calc_dy-{refset},{type}_{metric1},{type}_{metric2}.Rout"
+	shell:	'''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+	x_ref={input.x_ref} y_ref={input.y_ref}\
+	x_sim={params.x_sim} y_sim={params.y_sim}\
+	res={output}" {input[0]} {log}'''
+
 # ------------------------------------------------------------------------------
 #
 rule plot_ks_sum:
@@ -273,17 +309,27 @@ rule plot_ks_summary:
 	{R} CMD BATCH --no-restore --no-save "--args\
 	res={params} fig={output}" {input[0]} {log}'''
 
+rule plot_qc:
+	input: "code/05-plot_qc.R",
+	 		ref = rules.qc_ref.output, \
+	  		sim = lambda wc: [x for x in qc_sim_dirs \
+						if "{},{}_{}".format(wc.refset,wc.type,wc.metric) in x]
+	params: lambda wc, input: ";".join(input.sim)
+	output: "plots/qc_{refset},{type}_{metric}.pdf"
+	log: "logs/05-plot_qc-{refset},{type}_{metric}.Rout"
+	shell: '''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+	ref={input.ref} sim={params} fig={output}" {input[0]} {log}'''
 
 
-
-# rule plot_dy:
-# 	input:	"code/06-plot_dy.R",
-# 			res = rules.calc_dy.output
-# 	output:	"plots/dy-{refset},{metric1},{metric2}.pdf"
-# 	log:	"logs/06-plot_dy-{refset},{metric1},{metric2}.Rout"
-# 	shell: 	'''
-# 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-# 	res={input.res} fig={output}" {input[0]} {log}'''
+rule plot_dy:
+	input:	"code/06-plot_dy.R",
+			res = rules.calc_dy.output
+	output:	"plots/dy-{refset},{type}_{metric1},{type}_{metric2}.pdf"
+	log:	"logs/06-plot_dy-{refset},{type}_{metric1},{type}_{metric2}.Rout"
+	shell: 	'''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+	res={input.res} fig={output}" {input[0]} {log}'''
 #
 # rule plot_dy_boxplot:
 # 	input:	"code/06-plot_dy_boxplot.R",
