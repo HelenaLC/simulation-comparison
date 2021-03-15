@@ -7,36 +7,12 @@
 			"batch": ["indrop"]
 		}
 	},
-	"Mereu20":{
-		"CD4T":{
-			"type": ["b"],
-			"ncells": null,
-			"cluster": ["CD4 T cells"],
-			"batch": ["Chromium", "Drop-Seq", "Smart-Seq2"]
-		}
-	},
-	"CellBench":{
+
+	"CellBench": {
 		"H1975":{
 			"type": ["b"],
 			"ncells": null,
 			"cluster": ["H1975"]
-		},
-		"H2228":{
-			"type": ["b"],
-			"ncells": null,
-			"cluster": ["H2228"]
-		},
-		"HCC827":{
-			"type": ["b"],
-			"ncells": null,
-			"cluster": ["HCC827"]
 		}
-	},
-	"Kang18":{
-	    "B":{
-	        "type": ["b"],
-	        "ncells": "100",
-	        "cluster": ["B cells"]
-	    }
 	}
 }
