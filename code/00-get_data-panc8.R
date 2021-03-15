@@ -35,4 +35,5 @@ dimnames(x) <- list(
     paste0("cell", seq_len(ncol(x))))
 
 # save SCE to .rds
+print(dim(x))
 saveRDS(x, args[[1]])

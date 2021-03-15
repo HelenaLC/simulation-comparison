@@ -39,4 +39,5 @@ res <- map_depth(cs, 2, function(.) {
 res <- map_depth(res, 1, bind_rows, .id = "id")
 res <- bind_rows(res, .id = "group")
 
+print(dim(res))
 saveRDS(res, args$res)

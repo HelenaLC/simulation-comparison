@@ -17,5 +17,5 @@ x <- readRDS(args$sce)
 qc_func <- function(x){return(log(colSums(counts(x)) + 1))}
 
 qc <- .calc_qc_for_splits(x=x, metric_name="cell_lls", FUN=qc_func) 
-
+print(dim(qc))
 saveRDS(qc, args$res)

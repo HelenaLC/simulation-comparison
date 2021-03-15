@@ -78,32 +78,36 @@ rule all:
 		expand("plots/ks_summary_{refset}.pdf", refset=REFSETS),
 		expand("plots/ks.pdf"),
 		expand(
-			expand("results/dy-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
+			expand("results/{{comp_metric}}-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
 				metric1 = [m[0] for m in gene_metrics_combi],
 				metric2 = [m[1] for m in gene_metrics_combi],
-			),type = ['gene'],
-			 refset = REFSETS),
-
-		expand(
-			expand("results/dy-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
-				metric1 = [m[0] for m in cell_metrics_combi],
-				metric2 = [m[1] for m in cell_metrics_combi]
-			),type = ['cell'],
-			 refset = REFSETS),
-		expand(
-			expand("plots/dy-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.pdf", zip,
-				metric1 = [m[0] for m in gene_metrics_combi],
-				metric2 = [m[1] for m in gene_metrics_combi]
-			),type = ['gene'],
+			),comp_metric = ["dy", "emd"],
+			type = ['gene'],
 			refset = REFSETS),
+
 		expand(
-			expand("plots/dy-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.pdf", zip,
+			expand("results/{{comp_metric}}-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
 				metric1 = [m[0] for m in cell_metrics_combi],
 				metric2 = [m[1] for m in cell_metrics_combi]
-			),type = ['cell'],
-	 		refset = REFSETS),
+			), comp_metric = ["dy", "emd"],
+			type = ['cell'],
+			refset = REFSETS),
+		# expand(
+		# 	expand("plots/dy-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.pdf", zip,
+		# 		metric1 = [m[0] for m in gene_metrics_combi],
+		# 		metric2 = [m[1] for m in gene_metrics_combi]
+		# 	),type = ['gene'],
+		# 	refset = REFSETS),
+		# expand(
+		# 	expand("plots/dy-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.pdf", zip,
+		# 		metric1 = [m[0] for m in cell_metrics_combi],
+		# 		metric2 = [m[1] for m in cell_metrics_combi]
+		# 	),type = ['cell'],
+	 	# 	refset = REFSETS),
 
-	# "plots/dy-{refset},{type}_{metric1},{type}_{metric2}.pdf"
+
+
+
 
  		# qc_dirs, ks_dirs
 # 		expand(expand(
@@ -270,7 +274,7 @@ rule calc_ks:
 # 	res={output}" {input[0]} {log}'''
 #
 rule calc_dy:
-	input:	"code/05-calc_dy_adapted.R",
+	input:	"code/05-calc_{comp_metric}_adapted.R",
 			x_ref = "results/qc_ref-{refset},{type}_{metric1}.rds",
 			y_ref = "results/qc_ref-{refset},{type}_{metric2}.rds",
 			x_sim = lambda wc: [x for x in qc_sim_dirs \
@@ -279,8 +283,8 @@ rule calc_dy:
 				if "{},{}_{}".format(wc.refset,wc.type, wc.metric2) in x]
 	params: x_sim = lambda wc, input: ";".join(input.x_sim),
 			y_sim = lambda wc, input: ";".join(input.y_sim)
-	output:	"results/dy-{refset},{type}_{metric1},{type}_{metric2}.rds"
-	log:	"logs/05-calc_dy-{refset},{type}_{metric1},{type}_{metric2}.Rout"
+	output:	"results/{comp_metric}-{refset},{type}_{metric1},{type}_{metric2}.rds"
+	log:	"logs/05-calc_{comp_metric}-{refset},{type}_{metric1},{type}_{metric2}.Rout"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	x_ref={input.x_ref} y_ref={input.y_ref}\

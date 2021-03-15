@@ -20,5 +20,5 @@ qc_func <- function(x){return(rowVars(as.matrix(log(cpm(x) + 1))))}
 
 qc <- .calc_qc_for_splits(x=x, metric_name="gene_var", FUN=qc_func) 
 
-
+print(dim(qc))
 saveRDS(qc, args$res)

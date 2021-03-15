@@ -93,6 +93,28 @@
         summarise(x = mean(x), dy = diff(y))
 }
 
+# compute earth mover distance between two matrices ref$x,y and sim$x,y as a distibution over a two-dimensional grid
+.emd <- function(ref, sim){
+    print("inside emd distance calc")
+    print("ref")
+    print(dim(as.matrix(ref[c("x", "y")])))
+    print(head(ref))
+    print("sim")
+    print(dim(as.matrix(sim[c("x", "y")])))
+    print(head(sim))
+    
+    
+    d_ref <- density(as.matrix(ref[c("x", "y")]))
+    d_sim <- density(as.matrix(sim[c("x", "y")]))
+    
+    m1 <- cbind(d_ref$x, d_ref$y)
+    m2 <- cbind(d_sim$x, d_sim$y)
+    emd <- emd2d(m1, m2, dist="euclidean")
+    print("emd calc from .emd function")
+    print(emd)
+    print("---------------------------------------")
+    return(emd)
+}
 # simulation ----
 
 # + utils ----

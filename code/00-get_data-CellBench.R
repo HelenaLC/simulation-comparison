@@ -32,11 +32,13 @@ sce <- lapply(ids, function(id)
     # make counts sparse & drop drop log-normalized counts
     y <- as(counts(x), "dgCMatrix")
     assays(x) <- list(counts = y)
+    print(dim(x))
     return(x)
 })
 
 # concatenate batches into single dataset
 sce <- do.call(cbind, sce)
-
+print("size if whole dataset")
+print(dim(sce))
 # write SCE to .rds
 saveRDS(sce, args[[1]])
