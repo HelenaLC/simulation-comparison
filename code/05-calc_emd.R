@@ -3,6 +3,7 @@ suppressPackageStartupMessages({
   library(purrr)
   library(emdist)
   library(tidyr)
+  library(MASS)
 })
 # args <- list(
 #     x_ref = "results/qc_ref-CellBench,H1975,gene_avg.rds",
@@ -41,154 +42,50 @@ suppressPackageStartupMessages({
 # )
 # wcs <- list(type ="gene", metric1="avg",metric2="cor")
 
+# args <- list(
+#   x_ref = "results/qc_ref-panc8,indrop_alpha,gene_avg.rds",
+#   y_ref = "results/qc_ref-panc8,indrop_alpha,gene_var.rds",
+#   x_sim = c("results/qc_sim-panc8,indrop_alpha,gene_avg,splatter.rds", "results/qc_sim-panc8,indrop_alpha,gene_avg,SPsimSeq.rds", "results/qc_sim-panc8,indrop_alpha,gene_avg,SymSim.rds"),
+#   y_sim = c( "results/qc_sim-panc8,indrop_alpha,gene_var,splatter.rds", "results/qc_sim-panc8,indrop_alpha,gene_var,SPsimSeq.rds", "results/qc_sim-panc8,indrop_alpha,gene_var,SymSim.rds" )
+# )
+# 
+# wcs <- list(type ="gene", metric1="avg",metric2="var")
+
+
+
+if (wcs$metric1 == "cor" || wcs$metric2 =="cor") {
+  print("saving nothing")
+  saveRDS(NULL, args$res)
+}else{
+  
+  
 x <- .read_res(args$x_ref, args$x_sim)
 y <- .read_res(args$y_ref, args$y_sim)
 
-### new stuff
 
-x <- rename(x, x=paste0(wcs$type, '_', wcs$metric1))
-y <- rename(y, y=paste0(wcs$type, '_', wcs$metric2))
-y_ref <- y %>%
-            filter(., method =="reference")
+df <- x %>%
+  rename(x = paste0(wcs$type, '_', wcs$metric1)) %>%
+  mutate(y = y[[paste0(wcs$type, '_', wcs$metric2)]])
 
-df <- x %>% group_by(group, id)
+
+df <- group_by(df, group, id)
 emd <- group_map(df, ~{
+  
   d <- group_by(.x, .x$method)
   dfs <- setNames(group_split(d), group_keys(d)[[1]])
-  # print(dfs)c
   i <- which(names(dfs) == "reference")
   
-  curr_group <- .x$group[1]
-  curr_id <- .x$id[1]
-  y_df <- y %>%
-            filter(., group==curr_group, id==curr_id)
-  y_ref_curr <- y_ref %>%
-                       filter(., group==curr_group, id==curr_id)
-  
   result <- lapply(dfs[-i], function(s){
-    
-    curr_method <- s$method[1]
-    y_sim <- y_df %>%
-                  filter(., method==curr_method)
-    # print("--")
-    # print(head(y_subset))
-    # print(head(s))
-    # .emd(dfs[[i]], s)
-    # print(.x$group[1])
-    # print(.x$id[1])
-    print(paste(curr_group, curr_id))
-    print(curr_method)
     data.frame(group = .x$group[1],
                id = .x$id[1],
-               emd = .emd_adapted(x_ref=dfs[[i]], x_sim=s, y_ref=y_ref_curr, y_sim= y_sim)) 
+               emd = .emd(dfs[[i]][c("x","y")], s[c("x","y")]))
   })
-  
-}, .keep = TRUE)
+}, .keep=TRUE)
 
 res <- emd %>%
-  map(., ~bind_rows(.x, .id="method")) %>%
-  bind_rows(.)
+            map(., ~bind_rows(.x, .id="method")) %>%
+            bind_rows(.)
 
 print(res)
-
 saveRDS(res, args$res)
-
-# ####old stuff 
-# 
-# df <- x %>% 
-#   rename(x = paste0(wcs$type, '_', wcs$metric1)) %>% 
-#   mutate(y = y[[paste0(wcs$type, '_', wcs$metric2)]])
-# 
-# 
-# # dfs <- split(df, df$method, drop = TRUE)
-# # ref <- which(names(dfs) == "reference")
-# # sim <- dfs[-ref]; ref <- dfs[[ref]]
-# # 
-# # df <- group_by(df, group, id)
-# # ks <- group_map(df, ~{
-# #   df <- group_by(.x, method)
-# #   dfs <- setNames(
-# #     group_split(df), 
-# #     group_keys(df)[[1]])
-# #   i <- which(names(dfs) == "reference")
-# #   vapply(dfs[-i], function(sim) 
-# #     .ks(sim[[paste0(wcs$type, '_', wcs$metric)]], 
-# #         dfs[[i]][[paste0(wcs$type, '_', wcs$metric)]]),
-# #     numeric(1))
-# # })
-# 
-# df <- group_by(df, group, id)
-# emd <- group_map(df, ~{
-#   d <- group_by(.x, .x$method)
-#   dfs <- setNames(group_split(d), group_keys(d)[[1]])
-#   i <- which(names(dfs) == "reference")
-#   
-#   # dfs <- split(.x, .x$method, drop = TRUE)
-#   # print(length(dfs))
-#   # ref <- which(names(dfs) == "reference")
-#   # sim <- dfs[-ref]
-#   # ref <- dfs[[ref]]
-#   # print("ref")
-#   # print(dim(ref))
-#   # print(head(ref))
-#   # print("sim")
-#   # print(dim(sim$BASiCS))
-#   # print(head(sim$BASiCS))
-#   # 
-#   result <- lapply(dfs[-i], function(s){
-#     # .emd(dfs[[i]], s)
-#     # print(.x$group[1])
-#     # print(.x$id[1])
-#     data.frame(group = .x$group[1],
-#                id = .x$id[1],
-#                emd = .emd(dfs[[i]], s))
-#   })
-#   # print("result")
-#   # print(result)
-# }, .keep=TRUE)
-# 
-# res <- emd %>%
-#             map(., ~bind_rows(.x, .id="method")) %>%
-#             bind_rows(.)
-#   # bind_rows(map(emd, ~bind_rows(.x, .id="method")))
-# 
-# 
-# # res <- data.frame(
-# #   group_keys(df), 
-# #   t(data.frame(ks))) %>% 
-# #   pivot_longer(
-# #     cols = -c(group, id), 
-# #     names_to = "method", 
-# #     values_to = "stat")
-# 
-# # res <- lapply(sim, function(.) {
-# #   df <- 
-# #   group_by(., group, id) %>%
-# #     group_map(
-# #       .keep = TRUE, 
-# #       ~data.frame(
-# #         group = .x$group[1], 
-# #         id = .x$id[1], 
-# #         .emd(ref, .x)))
-# # }) %>% 
-# #   map(bind_rows) %>% 
-# #   bind_rows(.id = "method")
-# # 
-# 
-# # 
-# # res <- lapply(sim, function(.) {
-# #   
-# #   group_by(., group, id) %>%
-# #     group_map(
-# #       .keep = TRUE, 
-# #       ~data.frame(
-# #         group = .x$group[1], 
-# #         id = .x$id[1], 
-# #         .emd(ref, .x)))
-# # }) %>% 
-# #   map(bind_rows) %>% 
-# #   bind_rows(.id = "method")
-# 
-# 
-# 
-# saveRDS(res, args$res)
+}

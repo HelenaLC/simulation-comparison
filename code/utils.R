@@ -97,55 +97,25 @@
 }
 
 # compute earth mover distance between two matrices ref$x,y and sim$x,y as a distibution over a two-dimensional grid
+# ref and sim must have two columns (in each column one metric)
 .emd <- function(ref, sim){
-    print("inside emd distance calc")
-    print("ref")
-    print(dim(as.matrix(ref[c("x", "y")])))
-    print(head(ref))
-    print("sim")
-    print(dim(as.matrix(sim[c("x", "y")])))
-    print(head(sim))
+   
+    x_ref <- as.matrix(ref[ ,1])
+    y_ref <- as.matrix(ref[ ,2])
+    x_sim <- as.matrix(sim[ ,1])
+    y_sim <- as.matrix(sim[ ,2])
+    lims <- c(
+        range(c(x_ref, x_sim)),
+        range(c(y_ref, y_sim)))
     
+    d_ref <- kde2d(x_ref, y_ref, 50, lims = lims)
+    d_sim <- kde2d(x_sim, y_sim, 50, lims = lims)
     
-    d_ref <- density(as.matrix(ref[c("x", "y")]))
-    d_sim <- density(as.matrix(sim[c("x", "y")]))
-    
-    m1 <- cbind(d_ref$x, d_ref$y)
-    m2 <- cbind(d_sim$x, d_sim$y)
-    emd <- emd2d(m1, m2, dist="euclidean")
-    print("emd calc from .emd function")
-    print(emd)
-    print("---------------------------------------")
+    emd <- emd2d(d_ref$z, d_sim$z, dist = "euclidean")
     return(emd)
 }
 
-.emd_adapted <- function(x_ref, x_sim, y_ref, y_sim){
-    # print("x_ref")
-    # print(dim(x_ref))
-    # print(head(x_ref))
-    # print("x_sim")
-    # print(dim(x_sim))
-    # print(head(x_sim))
-    # print("y_ref") 
-    # print(dim(y_ref))
-    # print(head(y_ref))
-    # print("y_sim") 
-    # print(dim(y_sim))
-    # print(head(y_sim))
-    # 
-    ref <- c(x_ref$x, y_ref$y)
-    sim <- c(x_sim$x, y_sim$y)
-    d_ref <- density(as.matrix(ref))
-    d_sim <- density(as.matrix(sim))
-    m1 <- cbind(d_ref$x, d_ref$y)
-    m2 <- cbind(d_sim$x, d_sim$y)
-    emd <- emd2d(m1, m2, dist="euclidean")
-    print("emd calc from .emd function")
-    print(emd)
-    print("---------------------------------------")
-    return(emd)
-    
-}
+
 # simulation ----
 
 # + utils ----

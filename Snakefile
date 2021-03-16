@@ -69,11 +69,6 @@ rule all:
 				zip,type = TYPE_METRIC,metric= METRICS
 			), refset = REFSETS),
 		qc_sim_dirs,
-		# # expand("results/pw_qc_ref-{refset},cell_cor.rds", refset = REFSETS),
-		# #
-		# # expand("results/pw_qc_sim-{refset},cell_cor,{method}.rds",
-		# # 			zip, refset=RUNS["ref"],method=RUNS["mid"]),
-		#
 		expand(
 			expand("plots/qc_{{refset}},{type}_{metric}.pdf",
 				zip,type=TYPE_METRIC,metric=METRICS
@@ -81,6 +76,7 @@ rule all:
 		ks_dirs,
 		expand("plots/ks_summary_{refset}.pdf", refset=REFSETS),
 		expand("plots/ks.pdf"),
+
 		expand(
 			expand("results/{{comp_metric}}-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
 				metric1 = [m[0] for m in gene_metrics_combi],
@@ -90,11 +86,20 @@ rule all:
 			refset = REFSETS),
 		expand(
 			expand("results/{{comp_metric}}-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
-				metric1 = [m[0] for m in cell_metrics_combi],
-				metric2 = [m[1] for m in cell_metrics_combi]
-			), comp_metric = [ "emd"],
-			type = ['cell'],
-			refset = REFSETS),
+				metric1=[m[0] for m in cell_metrics_combi],
+				metric2=[m[1] for m in cell_metrics_combi],
+			),comp_metric = ["emd"],
+			type=['cell'],
+			refset=REFSETS
+		)
+
+		# expand(
+		# 	expand("results/{{comp_metric}}-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
+		# 		metric1 = [m[0] for m in cell_metrics_combi],
+		# 		metric2 = [m[1] for m in cell_metrics_combi]
+		# 	), comp_metric = [ "emd"],
+		# 	type = ['cell'],
+		# 	refset = REFSETS),
 
 
 
@@ -225,7 +230,15 @@ rule qc_ref:
 	shell: '''
 	{R} CMD BATCH --no-restore --no-save "--args sce={input.sce} res={output}" {input[0]} {log}
 	'''
-
+# rule qc_ref:
+# 	priority: 1
+# 	input: "code/05-calc_qc.R",
+# 			sce = "data/02-sub/{refset}.rds"
+# 	output: "results/qc_ref-{refset},{type}_{metric}.rds"
+# 	log: "logs/05_qc_ref-{refset},{type}_{metric}.Rout"
+# 	shell: '''
+# 	{R} CMD BATCH --no-restore --no-save "--args sce={input.sce} res={output}" {input[0]} {log}
+# 	'''
 
 rule qc_sim:
 	input: "code/05-{type}_qc-{metric}.R",
