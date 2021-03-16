@@ -69,7 +69,10 @@
     z <- if (isTRUE(y == "pnorm")) 
         list(mean = mean(x), sd = sd(x))
     suppressWarnings(z <- do.call(ks.test, c(list(x, y), z)))
-    as.numeric(z$statistic)
+    res <- as.numeric(z$statistic)
+    print("ks result")
+    print(res)
+    return(res)
 }
 
 # + grid evaluation
@@ -115,29 +118,71 @@
     print("---------------------------------------")
     return(emd)
 }
+
+.emd_adapted <- function(x_ref, x_sim, y_ref, y_sim){
+    # print("x_ref")
+    # print(dim(x_ref))
+    # print(head(x_ref))
+    # print("x_sim")
+    # print(dim(x_sim))
+    # print(head(x_sim))
+    # print("y_ref") 
+    # print(dim(y_ref))
+    # print(head(y_ref))
+    # print("y_sim") 
+    # print(dim(y_sim))
+    # print(head(y_sim))
+    # 
+    ref <- c(x_ref$x, y_ref$y)
+    sim <- c(x_sim$x, y_sim$y)
+    d_ref <- density(as.matrix(ref))
+    d_sim <- density(as.matrix(sim))
+    m1 <- cbind(d_ref$x, d_ref$y)
+    m2 <- cbind(d_sim$x, d_sim$y)
+    emd <- emd2d(m1, m2, dist="euclidean")
+    print("emd calc from .emd function")
+    print(emd)
+    print("---------------------------------------")
+    return(emd)
+    
+}
 # simulation ----
 
 # + utils ----
 
-.split_cells <- function(x, by) 
-{
-    if (is(x, "SingleCellExperiment")) x <- colData(x)
-    cd <- data.frame(x[by], check.names = FALSE)
-    cd <- data.table(cd, i = rownames(x)) %>% 
-        split(by = by, sorted = TRUE, flatten = FALSE)
-    map_depth(cd, length(by), "i")
+# don't know if this function is used..
+# .split_cells <- function(x, by) 
+# {
+#     if (is(x, "SingleCellExperiment")) x <- colData(x)
+#     cd <- data.frame(x[by], check.names = FALSE)
+#     cd <- data.table(cd, i = rownames(x)) %>% 
+#         split(by = by, sorted = TRUE, flatten = FALSE)
+#     map_depth(cd, length(by), "i")
+# }
+
+#
+.split_cells <- function(x){
+    i <- c("cluster", "sample", "batch")
+    names(i) <- i <- intersect(i, names(colData(x)))
+    cs <- c(
+        list(global = list(foo = TRUE)),
+        lapply(i, function(.) split(seq(ncol(x)), x[[.]])))
+
+    return(cs)
+    
 }
 
+.combine_res_of_splits <- function(res){
+    res <- map_depth(res, 1, bind_rows, .id = "id")
+    res <- bind_rows(res, .id = "group")
+    return(res)
+}
 # split genes by group = "cluster","batch", "sample". 
 # Then per group calculate the qc with the FUN function(which is a metric)
 # returns a dataframe with cols:  group | id | metric_name
 .calc_qc_for_splits <- function(x, metric_name, FUN){
     
-    i <- c("cluster", "sample", "batch")
-    names(i) <- i <- intersect(i, names(colData(x)))
-    cs <- c(
-        list(global = list(foo = TRUE)), 
-        lapply(i, function(.) split(seq(ncol(x)), x[[.]])))
+    cs <- .split_cells(x)
     
     res <- map_depth(cs, 2, function(.) {
         df <- data.frame(
@@ -147,8 +192,7 @@
         return(df)
     })
     
-    res <- map_depth(res, 1, bind_rows, .id = "id")
-    res <- bind_rows(res, .id = "group")
+    res <- .combine_res_of_splits(res)
     
     return(res)
 }

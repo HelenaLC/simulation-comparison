@@ -68,30 +68,36 @@ rule all:
 			expand("results/qc_ref-{{refset}},{type}_{metric}.rds",
 				zip,type = TYPE_METRIC,metric= METRICS
 			), refset = REFSETS),
+		qc_sim_dirs,
+		# # expand("results/pw_qc_ref-{refset},cell_cor.rds", refset = REFSETS),
+		# #
+		# # expand("results/pw_qc_sim-{refset},cell_cor,{method}.rds",
+		# # 			zip, refset=RUNS["ref"],method=RUNS["mid"]),
+		#
 		expand(
 			expand("plots/qc_{{refset}},{type}_{metric}.pdf",
 				zip,type=TYPE_METRIC,metric=METRICS
 				), refset = REFSETS),
-		qc_sim_dirs,
 		ks_dirs,
-
 		expand("plots/ks_summary_{refset}.pdf", refset=REFSETS),
 		expand("plots/ks.pdf"),
 		expand(
 			expand("results/{{comp_metric}}-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
 				metric1 = [m[0] for m in gene_metrics_combi],
 				metric2 = [m[1] for m in gene_metrics_combi],
-			),comp_metric = ["dy", "emd"],
+			),comp_metric = ["emd"],
 			type = ['gene'],
 			refset = REFSETS),
-
 		expand(
 			expand("results/{{comp_metric}}-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
 				metric1 = [m[0] for m in cell_metrics_combi],
 				metric2 = [m[1] for m in cell_metrics_combi]
-			), comp_metric = ["dy", "emd"],
+			), comp_metric = [ "emd"],
 			type = ['cell'],
 			refset = REFSETS),
+
+
+
 		# expand(
 		# 	expand("plots/dy-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.pdf", zip,
 		# 		metric1 = [m[0] for m in gene_metrics_combi],
@@ -220,6 +226,7 @@ rule qc_ref:
 	{R} CMD BATCH --no-restore --no-save "--args sce={input.sce} res={output}" {input[0]} {log}
 	'''
 
+
 rule qc_sim:
 	input: "code/05-{type}_qc-{metric}.R",
 			sce = rules.sim_data.output
@@ -229,8 +236,9 @@ rule qc_sim:
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	sce={input.sce} res={output}" {input[0]} {log}'''
 
+
 rule calc_ks:
-	input: "code/05-calc_ks_adapted.R",
+	input: "code/05-calc_ks.R",
 			ref = rules.qc_ref.output,
 			sim = lambda wc: [x for x in qc_sim_dirs \
 				if "{},{}_{}".format(wc.refset,wc.type, wc.metric) in x] # {refset},{{type}}_{{metric}}
@@ -273,8 +281,8 @@ rule calc_ks:
 # 	x_sim={params.x_sim} y_sim={params.y_sim}\
 # 	res={output}" {input[0]} {log}'''
 #
-rule calc_dy:
-	input:	"code/05-calc_{comp_metric}_adapted.R",
+rule calc_emd:
+	input:	"code/05-calc_{comp_metric}.R",
 			x_ref = "results/qc_ref-{refset},{type}_{metric1}.rds",
 			y_ref = "results/qc_ref-{refset},{type}_{metric2}.rds",
 			x_sim = lambda wc: [x for x in qc_sim_dirs \
@@ -326,14 +334,14 @@ rule plot_qc:
 	ref={input.ref} sim={params} fig={output}" {input[0]} {log}'''
 
 
-rule plot_dy:
-	input:	"code/06-plot_dy.R",
-			res = rules.calc_dy.output
-	output:	"plots/dy-{refset},{type}_{metric1},{type}_{metric2}.pdf"
-	log:	"logs/06-plot_dy-{refset},{type}_{metric1},{type}_{metric2}.Rout"
-	shell: 	'''
-	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	res={input.res} fig={output}" {input[0]} {log}'''
+# rule plot_dy:
+# 	input:	"code/06-plot_dy.R",
+# 			res = rules.calc_dy.output
+# 	output:	"plots/dy-{refset},{type}_{metric1},{type}_{metric2}.pdf"
+# 	log:	"logs/06-plot_dy-{refset},{type}_{metric1},{type}_{metric2}.Rout"
+# 	shell: 	'''
+# 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+# 	res={input.res} fig={output}" {input[0]} {log}'''
 #
 # rule plot_dy_boxplot:
 # 	input:	"code/06-plot_dy_boxplot.R",
