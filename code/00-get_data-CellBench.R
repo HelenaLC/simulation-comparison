@@ -24,11 +24,6 @@ sce <- lapply(ids, function(id)
         cluster = x$cell_line)
     metadata(x) <- list()
     
-    # simplify gene & cell names
-    dimnames(x) <- list(
-        paste0("gene", seq_len(nrow(x))),
-        paste0("cell", seq_len(ncol(x))))
-    
     # make counts sparse & drop drop log-normalized counts
     y <- as(counts(x), "dgCMatrix")
     assays(x) <- list(counts = y)
@@ -38,6 +33,12 @@ sce <- lapply(ids, function(id)
 
 # concatenate batches into single dataset
 sce <- do.call(cbind, sce)
+
+# simplify gene & cell names
+dimnames(sce) <- list(
+    paste0("gene", seq_len(nrow(sce))),
+    paste0("cell", seq_len(ncol(sce))))
+
 print("size if whole dataset")
 print(dim(sce))
 # write SCE to .rds
