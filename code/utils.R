@@ -9,7 +9,9 @@
     splatter = "orange",
     scDesign = "gold",
     SymSim = "green",
-    SPARSim = "blue")
+    SPARSim = "blue",
+    powsimR ="grey", 
+    POWSC="chocolate")
 
 # theme for quality control plots
 .prettify <- function(theme = NULL, ...) 

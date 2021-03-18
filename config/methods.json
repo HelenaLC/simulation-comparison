@@ -1,7 +1,9 @@
 {
 	"BASiCS": ["b"],
 	"SPARSim": ["n"],
+	"SPsimSeq": ["n", "b"],
 	"splatter": ["n"],
-	"SymSim": ["n"]
+	"SymSim": ["n"],
+	"powsimR": ["n"]
     
 }
