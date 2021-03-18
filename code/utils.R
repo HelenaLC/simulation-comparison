@@ -100,9 +100,7 @@
 # ref and sim must have two columns (in each column one metric)
 
 .emd <- function(x, y, n = 25) {
-    stopifnot(
-        identical(dim(x), dim(y)),
-        is.numeric(n), length(n) == 1, n == as.integer(n))
+    stopifnot(is.numeric(n), length(n) == 1, n == as.integer(n))
     if (is.null(dim(x))) {
         # ONE-DIMENSIONAL
         # smoothing
