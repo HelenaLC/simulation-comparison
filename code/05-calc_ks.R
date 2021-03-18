@@ -19,10 +19,13 @@ suppressPackageStartupMessages({
 # args<- list(ref = "results/qc_ref-CellBench,H1975,cell_cor.rds",
 #             sim = c("results/qc_sim-CellBench,H1975,cell_cor,BASiCS.rds", "results/qc_sim-CellBench,H1975,cell_cor,SPsimSeq.rds"))
 # wcs <- list(refset="CellBench", H1975=NA, type="gene", metric="avg")
-
+this_metric <- paste0(wcs$type, '_', wcs$metric)
+this_metric
+if(this_metric != "cell_cms"){
 df <- .read_res(args$ref, args$sim)
 print(head(df))
-this_metric <- paste0(wcs$type, '_', wcs$metric)
+}else{df <- NA}
+#TODO: take out this_metric != "cell_cms" once cms was implemented with proper parameters and does not only have zero values
 if (!is.na(df)) {
   df <- group_by(df, group, id)
   ks <- group_map(df, ~{
@@ -54,3 +57,4 @@ if (!is.na(df)) {
 
 print(head(res))
 saveRDS(res, args$res)
+

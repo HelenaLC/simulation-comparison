@@ -9,6 +9,11 @@ suppressPackageStartupMessages({
 # args <- list(ref=c( "results/qc_ref-panc8,indrop_alpha,gene_avg.rds"),
 #              sim=c( "results/qc_sim-panc8,indrop_alpha,gene_avg,splatter.rds", "results/qc_sim-panc8,indrop_alpha,gene_avg,SPsimSeq.rds", "results/qc_sim-panc8,indrop_alpha,gene_avg,SymSim.rds"))
 # 
+# wcs <- list(refest = 'CellBench', H1975=NA, type="cell", metric="cms")
+# args <- list(ref=c( "results/qc_ref-CellBench,H1975,cell_cms.rds"),
+#              sim=c( "results/qc_sim-CellBench,H1975,cell_cms,BASiCS.rds", "results/qc_sim-CellBench,H1975,cell_cms,SPsimSeq.rds"))
+
+
 
 metric_str = paste0(wcs$type, '_', wcs$metric)
 # pat <- sprintf(".*,(.*),%s\\.rds", wcs$metric)
@@ -23,6 +28,7 @@ lab <- metric_str
 
 res <- lapply(c(args$ref, args$sim), readRDS)
 
+if(!is.na(res)){
 
 names(res) <- c("reference", ids)
 df <- bind_rows(res, .id = "method")
@@ -45,3 +51,11 @@ ps <- group_by(df, group, id) %>%
 # pdf(args$fig, width = 7/2.54, height = 4/2.54, onefile = TRUE)
 pdf(args$fig, width = 7, height = 5, onefile = TRUE)
 for (p in ps) print(p); dev.off()
+
+}else{
+    
+    df <- data.frame()
+    p <- ggplot(df) + geom_point() + xlim(0, 10) + ylim(0, 100)
+    ggsave(args$fig, p, width = 15, height = 20, units = "cm")
+}
+

@@ -12,7 +12,9 @@ suppressPackageStartupMessages({
 #          , "results/ks-panc8,indrop_alpha,gene_frq.rds"
 #          , "results/ks-CellBench,H1975,gene_frq.rds"
 #          ,"results/ks-panc8,indrop_alpha,gene_var.rds"
-#          ,"results/ks-CellBench,H1975,gene_var.rds"
+#          ,"results/ks-CellBench,H1975,gene_var.rds",
+# "results/ks-panc8,indrop_alpha,cell_cms.rds",
+# "results/ks-CellBench,H1975,cell_cms.rds"
 #          , "results/ks-panc8,indrop_alpha,cell_frq.rds"
 #          , "results/ks-CellBench,H1975,cell_frq.rds"
 #          , "results/ks-panc8,indrop_alpha,cell_lls.rds"
@@ -22,8 +24,14 @@ suppressPackageStartupMessages({
 
 this_refset <- paste(wcs$refset,names(wcs)[2] ,sep=",")
 res <- lapply(args$res, readRDS)
+valid <- vapply(res, function(.) 
+   !isTRUE(is.na(.)), logical(1))
+res <- res[valid]
+
 refsets <- gsub(".*-(.*),.*\\.rds", "\\1", basename(args$res))
 metrics <- gsub(".*,(.*)\\.rds", "\\1", basename(args$res))
+refsets <- refsets[valid]
+metrics <- metrics[valid]
 ns <- vapply(res, nrow, numeric(1))
 
 

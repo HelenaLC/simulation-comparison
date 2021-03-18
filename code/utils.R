@@ -160,8 +160,7 @@
 # }
 
 #
-.split_cells <- function(x){
-    i <- c("cluster", "sample", "batch")
+.split_cells <- function(x, i = c("cluster", "sample", "batch")){
     names(i) <- i <- intersect(i, names(colData(x)))
     cs <- c(
         list(global = list(foo = TRUE)),
@@ -179,9 +178,9 @@
 # split genes by group = "cluster","batch", "sample". 
 # Then per group calculate the qc with the FUN function(which is a metric)
 # returns a dataframe with cols:  group | id | metric_name
-.calc_qc_for_splits <- function(x, metric_name, FUN){
+.calc_qc_for_splits <- function(x, metric_name, i = c("cluster", "sample", "batch"), FUN){
     
-    cs <- .split_cells(x)
+    cs <- .split_cells(x, i)
     
     res <- map_depth(cs, 2, function(.) {
         df <- data.frame(

@@ -4,11 +4,14 @@ suppressPackageStartupMessages({
 })
 
 res <- lapply(args$res, readRDS)
-res <- res[vapply(res, function(.) 
-    !isTRUE(is.na(.)), logical(1))]
+valid <- vapply(res, function(.) 
+    !isTRUE(is.na(.)), logical(1))
+res <- res[valid]
 
 refsets <- gsub(".*-(.*),.*\\.rds", "\\1", basename(args$res))
 metrics <- gsub(".*,(.*)\\.rds", "\\1", basename(args$res))
+refsets <- refsets[valid]
+metrics <- metrics[valid]
 
 ns <- vapply(res, nrow, numeric(1))
 df <- mutate(bind_rows(res),
