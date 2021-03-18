@@ -75,21 +75,21 @@ rule all:
 		expand("plots/ks_summary_{refset}.pdf", refset=REFSETS),
 		"plots/ks.pdf",
 		"plots/ks_heatmap.pdf",
-		# expand(
-		# 	expand("results/{{comp_metric}}-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
-		# 		metric1 = [m[0] for m in gene_metrics_combi],
-		# 		metric2 = [m[1] for m in gene_metrics_combi],
-		# 	),comp_metric = ["emd"],
-		# 	type = ['gene'],
-		# 	refset = REFSETS),
-		# expand(
-		# 	expand("results/{{comp_metric}}-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
-		# 		metric1=[m[0] for m in cell_metrics_combi],
-		# 		metric2=[m[1] for m in cell_metrics_combi],
-		# 	),comp_metric = ["emd"],
-		# 	type=['cell'],
-		# 	refset=REFSETS
-		# )
+		expand(
+			expand("results/{{comp_metric}}-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
+				metric1 = [m[0] for m in gene_metrics_combi],
+				metric2 = [m[1] for m in gene_metrics_combi],
+			),comp_metric = ["emd"],
+			type = ['gene'],
+			refset = REFSETS),
+		expand(
+			expand("results/{{comp_metric}}-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
+				metric1=[m[0] for m in cell_metrics_combi],
+				metric2=[m[1] for m in cell_metrics_combi],
+			),comp_metric = ["emd"],
+			type=['cell'],
+			refset=REFSETS
+		)
 
 		# expand(
 		# 	expand("results/{{comp_metric}}-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
