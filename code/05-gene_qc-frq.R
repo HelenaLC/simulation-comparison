@@ -14,5 +14,5 @@ x <- readRDS(args$sce)
 qc_func <- function(x){return(rowMeans(counts(x) != 0))}
 
 qc <- .calc_qc_for_splits(x=x, metric_name="gene_frq", FUN=qc_func) 
-print(dim(qc))
-saveRDS(qc, args$res)
+# print(dim(qc))
+# saveRDS(qc, args$res)

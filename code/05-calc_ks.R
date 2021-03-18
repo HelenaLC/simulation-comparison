@@ -22,7 +22,7 @@ suppressPackageStartupMessages({
 
 df <- .read_res(args$ref, args$sim)
 print(head(df))
-
+this_metric <- paste0(wcs$type, '_', wcs$metric)
 if (!is.na(df)) {
   df <- group_by(df, group, id)
   ks <- group_map(df, ~{
@@ -32,8 +32,8 @@ if (!is.na(df)) {
       group_keys(df)[[1]])
     i <- which(names(dfs) == "reference")
     vapply(dfs[-i], function(sim) 
-      .ks(sim[[paste0(wcs$type, '_', wcs$metric)]], 
-          dfs[[i]][[paste0(wcs$type, '_', wcs$metric)]]),
+      .ks(sim[[this_metric]], 
+          dfs[[i]][[this_metric]]),
       numeric(1))
   })
   res <- data.frame(
@@ -43,6 +43,14 @@ if (!is.na(df)) {
       cols = -c(group, id), 
       names_to = "method", 
       values_to = "stat")
+  res <- cbind(data.frame(refset = wcs$refset, 
+                          subset = names(wcs)[2], 
+                          type= wcs$type, 
+                          metric=wcs$metric), res)
+
 } else res <- NA
 
+
+
+print(head(res))
 saveRDS(res, args$res)

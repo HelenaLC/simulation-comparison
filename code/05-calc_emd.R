@@ -55,7 +55,7 @@ suppressPackageStartupMessages({
 
 if (wcs$metric1 == "cor" || wcs$metric2 =="cor") {
   print("saving nothing")
-  saveRDS(NULL, args$res)
+  saveRDS(NA, args$res) #originally had NULL
 }else{
   
   

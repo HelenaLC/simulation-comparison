@@ -41,6 +41,5 @@ ns <- vapply(res, nrow, numeric(1))
    theme(axis.text.x = element_text(angle = 90)) +
    xlab(element_blank())+
    ggtitle(this_refset)
-print("it did go ggplot")
+
 ggsave(args$fig, p, width = 15, height = 20, units = "cm")
-print("it saved")

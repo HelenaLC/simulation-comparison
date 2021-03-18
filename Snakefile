@@ -74,9 +74,10 @@ rule all:
 				zip,type=TYPE_METRIC,metric=METRICS
 				), refset = REFSETS),
 		ks_dirs,
+		"results/ks_all_combined.rds",
 		expand("plots/ks_summary_{refset}.pdf", refset=REFSETS),
-		expand("plots/ks.pdf"),
-
+		"plots/ks.pdf",
+		"plots/ks_heatmap.pdf",
 		expand(
 			expand("results/{{comp_metric}}-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
 				metric1 = [m[0] for m in gene_metrics_combi],
@@ -221,33 +222,42 @@ rule sim_data:
 # 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 # 	sce={input.sce} fun={params.fun} res={output}" {input[0]} {log}'''
 
-rule qc_ref:
-	priority: 1
-	input: "code/05-{type}_qc-{metric}.R",
-			sce = "data/02-sub/{refset}.rds"
-	output: "results/qc_ref-{refset},{type}_{metric}.rds"
-	log: "logs/05_qc_ref-{refset},{type}_{metric}.Rout"
-	shell: '''
-	{R} CMD BATCH --no-restore --no-save "--args sce={input.sce} res={output}" {input[0]} {log}
-	'''
 # rule qc_ref:
 # 	priority: 1
-# 	input: "code/05-calc_qc.R",
+# 	input: "code/05-{type}_qc-{metric}.R",
 # 			sce = "data/02-sub/{refset}.rds"
 # 	output: "results/qc_ref-{refset},{type}_{metric}.rds"
 # 	log: "logs/05_qc_ref-{refset},{type}_{metric}.Rout"
 # 	shell: '''
 # 	{R} CMD BATCH --no-restore --no-save "--args sce={input.sce} res={output}" {input[0]} {log}
 # 	'''
+rule qc_ref:
+	priority: 1
+	input: "code/05-calc_qc.R",
+			sce = "data/02-sub/{refset}.rds"
+	output: "results/qc_ref-{refset},{type}_{metric}.rds"
+	log: "logs/05_qc_ref-{refset},{type}_{metric}.Rout"
+	shell: '''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards} sce={input.sce} res={output}" {input[0]} {log}
+	'''
 
 rule qc_sim:
-	input: "code/05-{type}_qc-{metric}.R",
+	input: "code/05-calc_qc.R",
 			sce = rules.sim_data.output
 	output: "results/qc_sim-{refset},{type}_{metric},{method}.rds"
 	log: "logs/05-qc_sim-{refset},{type}_{metric},{method}.Rout"
 	shell: '''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	sce={input.sce} res={output}" {input[0]} {log}'''
+
+# rule qc_sim:
+# 	input: "code/05-{type}_qc-{metric}.R",
+# 			sce = rules.sim_data.output
+# 	output: "results/qc_sim-{refset},{type}_{metric},{method}.rds"
+# 	log: "logs/05-qc_sim-{refset},{type}_{metric},{method}.Rout"
+# 	shell: '''
+# 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+# 	sce={input.sce} res={output}" {input[0]} {log}'''
 
 
 rule calc_ks:
@@ -311,6 +321,17 @@ rule calc_emd:
 	x_ref={input.x_ref} y_ref={input.y_ref}\
 	x_sim={params.x_sim} y_sim={params.y_sim}\
 	res={output}" {input[0]} {log}'''
+# ------------------------------------------------------------------------------
+rule combine_all:
+	input: "code/05-combine_all.R",
+			ref=ks_dirs
+	params: lambda wc,input: ";".join(input.ref)
+	output:  "results/ks_all_combined.rds"
+	log:    "logs/05-ks_all_combined.Rout"
+	shell:    '''
+	{R} CMD BATCH --no-restore --no-save "--args\
+	ref={params} res={output}" {input[0]} {log}'''
+
 
 # ------------------------------------------------------------------------------
 #
@@ -333,6 +354,18 @@ rule plot_ks_summary:
 	shell: 	'''
 	{R} CMD BATCH --no-restore --no-save "--args\
 	res={params} fig={output}" {input[0]} {log}'''
+
+
+rule plot_ks_heatmap:
+	input:	"code/06-plot_ks_heatmap.R",
+			res = rules.combine_all.output
+	params: lambda wc, input: ";".join(input.res)
+	output:	"plots/ks_heatmap.pdf"
+	log:	"logs/06-plot_ks_heatmap.Rout"
+	shell: 	'''
+	{R} CMD BATCH --no-restore --no-save "--args\
+	res={params} fig={output}" {input[0]} {log}'''
+
 
 rule plot_qc:
 	input: "code/05-plot_qc.R",

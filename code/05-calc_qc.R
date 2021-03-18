@@ -1,43 +1,14 @@
-suppressPackageStartupMessages({
-    library(dplyr)
-    library(jsonlite)
-    library(matrixStats)
-    library(purrr)
-    library(scater)
-    library(SingleCellExperiment)
-})
 
-# args <- list(
-#     sce = "data/04-sim/Mereu20,CD4T,muscat.rds",
-#     con = "config/metrics.json")
-# wcs <- list(metric = "gene_frq")
 
-x <- readRDS(args$sce)
-if (!is.matrix(z <- counts(x)))
-    counts(x) <- as.matrix(z)
 
-cpm <- calculateCPM(x)
-assay(x, "cpm") <- cpm
+source(paste0("code/05-",wcs$type,"_qc-",wcs$metric,".R" ))
 
-#y <- fromJSON(args$con)[[wcs$metric]]
-fun <- eval(parse(text = args$fun))
+df <- data.frame(refset= wcs$refset, 
+                 subset= names(wcs)[2], 
+                 type = wcs$type, 
+                 metric=wcs$metric, 
+                 method = ifelse(is.null(wcs$method), "ref", wcs$method), 
+                 qc)
+print(head(df))
 
-i <- c("cluster", "sample", "batch")
-names(i) <- i <- intersect(i, names(colData(x)))
-cs <- c(
-    list(global = list(foo = TRUE)), 
-    lapply(i, function(.) split(seq(ncol(x)), x[[.]])))
-
-res <- map_depth(cs, 2, function(.) {
-    df <- data.frame(
-        fun(x[, .]), 
-        row.names = NULL)
-    names(df) <- wcs$metric
-    return(df)
-})
-
-res <- map_depth(res, 1, bind_rows, .id = "id")
-res <- bind_rows(res, .id = "group")
-
-print(dim(res))
-saveRDS(res, args$res)
+saveRDS(df, args$res)

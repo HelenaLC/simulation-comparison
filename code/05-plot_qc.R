@@ -4,6 +4,12 @@ suppressPackageStartupMessages({
     library(ggplot2)
     library(purrr)
 })
+
+# wcs <- list(refest = 'panc8', indrop_alpha=NA, type="gene", metric="avg")
+# args <- list(ref=c( "results/qc_ref-panc8,indrop_alpha,gene_avg.rds"),
+#              sim=c( "results/qc_sim-panc8,indrop_alpha,gene_avg,splatter.rds", "results/qc_sim-panc8,indrop_alpha,gene_avg,SPsimSeq.rds", "results/qc_sim-panc8,indrop_alpha,gene_avg,SymSim.rds"))
+# 
+
 metric_str = paste0(wcs$type, '_', wcs$metric)
 # pat <- sprintf(".*,(.*),%s\\.rds", wcs$metric)
 pat <- sprintf(".*,%s,", metric_str)
@@ -13,6 +19,7 @@ ids <- gsub(".rds", "\\1", ids)
 ids
 # lab <- fromJSON(args$con)[[wcs$metric]]$lab
 lab <- metric_str
+
 
 res <- lapply(c(args$ref, args$sim), readRDS)
 

@@ -23,7 +23,7 @@ dim(cpms)
 
 ## split by group = "cluster","batch", "sample". 
 cs <- .split_cells(x)
-res <- map_depth(cs, -1, function(c){
+qc <- map_depth(cs, -1, function(c){
               
               subset <- cpms[,c]
               n <- min(ncol(subset), maxNForCorr)
@@ -39,6 +39,6 @@ res <- map_depth(cs, -1, function(c){
               
 })
 
-res <- .combine_res_of_splits(res)
-print(res)
-saveRDS(res, args$res)
+qc <- .combine_res_of_splits(qc)
+# print(qc)
+# saveRDS(qc, args$res)
