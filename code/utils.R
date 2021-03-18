@@ -98,22 +98,51 @@
 
 # compute earth mover distance between two matrices ref$x,y and sim$x,y as a distibution over a two-dimensional grid
 # ref and sim must have two columns (in each column one metric)
-.emd <- function(ref, sim){
-   
-    x_ref <- as.matrix(ref[ ,1])
-    y_ref <- as.matrix(ref[ ,2])
-    x_sim <- as.matrix(sim[ ,1])
-    y_sim <- as.matrix(sim[ ,2])
-    lims <- c(
-        range(c(x_ref, x_sim)),
-        range(c(y_ref, y_sim)))
-    
-    d_ref <- kde2d(x_ref, y_ref, 50, lims = lims)
-    d_sim <- kde2d(x_sim, y_sim, 50, lims = lims)
-    
-    emd <- emd2d(d_ref$z, d_sim$z, dist = "euclidean")
-    return(emd)
+
+.emd <- function(x, y, n = 25) {
+    stopifnot(
+        identical(dim(x), dim(y)),
+        is.numeric(n), length(n) == 1, n == as.integer(n))
+    if (is.null(dim(x))) {
+        # ONE-DIMENSIONAL
+        # smoothing
+        x <- density(x, n = n)$x
+        y <- density(y, n = n)$x
+        # compute EMD
+        ws <- rep(1/n, n)
+        x <- cbind(ws, x)
+        y <- cbind(ws, y)
+        emd(x, y)
+    } else {
+        # TWO-DIMENSIONAL
+        if (!is.matrix(x)) x <- as.matrix(x)
+        if (!is.matrix(y)) y <- as.matrix(y)
+        # smoothing over common range
+        rng <- c(
+            range(c(x[, 1], y[, 1])),
+            range(c(x[, 2], y[, 2])))
+        x <- kde2d(x[, 1], x[, 2], n = n, lims = rng)
+        y <- kde2d(y[, 1], y[, 2], n = n, lims = rng)
+        # compute EMD
+        emd2d(x$z, y$z)/n
+    }
 }
+# .emd <- function(ref, sim){
+#    
+#     x_ref <- as.matrix(ref[ ,1])
+#     y_ref <- as.matrix(ref[ ,2])
+#     x_sim <- as.matrix(sim[ ,1])
+#     y_sim <- as.matrix(sim[ ,2])
+#     lims <- c(
+#         range(c(x_ref, x_sim)),
+#         range(c(y_ref, y_sim)))
+#     
+#     d_ref <- kde2d(x_ref, y_ref, 50, lims = lims)
+#     d_sim <- kde2d(x_sim, y_sim, 50, lims = lims)
+#     
+#     emd <- emd2d(d_ref$z, d_sim$z, dist = "euclidean")
+#     return(emd)
+# }
 
 
 # simulation ----
