@@ -41,8 +41,8 @@ RUNS = {
 
 
 ks_dirs = expand(
-			expand("results/ks-{refset},{{type}}_{{metric}}.rds",refset= REFSETS),
-			zip, type = TYPE_METRIC,metric= METRICS)
+	expand("results/ks-{refset},{{type}}_{{metric}}.rds", refset= REFSETS),
+	zip, type = TYPE_METRIC, metric= METRICS)
 
 # [X] can we simplify this?
 emd_dirs = \
@@ -82,7 +82,7 @@ rule all:
 			refset = RUNS["ref"], method = RUNS["mid"]),
 		expand(
 			expand("results/qc_ref-{{refset}},{type}_{metric}.rds",
-				zip,type = TYPE_METRIC,metric= METRICS
+				zip, type = TYPE_METRIC, metric= METRICS
 			), refset = REFSETS),
 		qc_sim_dirs,
 		expand(
@@ -269,15 +269,13 @@ rule calc_ks:
 	input: "code/05-calc_ks.R",
 			ref = rules.qc_ref.output,
 			sim = lambda wc: [x for x in qc_sim_dirs \
-				if "{},{}_{}".format(wc.refset,wc.type, wc.metric) in x] # {refset},{{type}}_{{metric}}
+				if "{},{}_{}".format(wc.refset, wc.type, wc.metric) in x] # {refset},{{type}}_{{metric}}
 	params: lambda wc, input: ";".join(input.sim)
 	output: "results/ks-{refset},{type}_{metric}.rds"
 	log: "logs/05-calc_ks-{refset},{type}_{metric}.Rout"
 	shell: '''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	ref={input.ref} sim={params} res={output}" {input[0]} {log}'''
-
-
 
 # rule calc_ks:
 # 	input:	"code/05-calc_ks.R",

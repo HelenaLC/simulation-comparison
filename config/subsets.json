@@ -8,11 +8,19 @@
 		}
 	},
 
-	"CellBench": {
+	"CellBench":{
 		"H1975":{
 			"type": ["b"],
 			"ncells": null,
 			"cluster": ["H1975"]
 		}
+	},
+	
+	"Kang18":{
+	    "1015":{
+	        "type": ["k"],
+	        "ncells": "200",
+	        "batch": "1015"
+	    }
 	}
 }

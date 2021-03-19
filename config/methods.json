@@ -4,6 +4,6 @@
 	"SPsimSeq": ["n", "b"],
 	"splatter": ["n"],
 	"SymSim": ["n"],
+	"POWSC": ["k"],
 	"powsimR": ["n"]
-    
 }

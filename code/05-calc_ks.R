@@ -21,7 +21,7 @@ suppressPackageStartupMessages({
 # wcs <- list(refset="CellBench", H1975=NA, type="gene", metric="avg")
 this_metric <- paste0(wcs$type, '_', wcs$metric)
 this_metric
-if(this_metric != "cell_cms"){
+if(this_metric != c("cell_cms")){
 df <- .read_res(args$ref, args$sim)
 print(head(df))
 }else{df <- NA}

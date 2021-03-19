@@ -52,8 +52,9 @@ suppressPackageStartupMessages({
 # wcs <- list(type ="gene", metric1="avg",metric2="var")
 
 
-
-if (wcs$metric1 %in% c("cor", "cms") || wcs$metric2 %in% c("cor","cms")) {
+ex <- c("cor", "cms", "sil")
+metrics <- c(wcs$metric1, wcs$metric2)
+if (any(metrics %in% ex)) {
   print("saving nothing")
   saveRDS(NA, args$res) #originally had NULL
 }else{

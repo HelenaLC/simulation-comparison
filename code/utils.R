@@ -60,8 +60,14 @@
     res <- lapply(c(ref, sim), readRDS)
     names(res) <- c("reference", ids)
     
-    df <- bind_rows(res, .id = "method")
-    df$method <- factor(df$method, names(.pal))
+    nan <- vapply(res, function(.) 
+        isTRUE(is.na(.)), logical(1))
+    if (all(nan)) {
+        df <- NA
+    } else {
+        df <- bind_rows(res, .id = "method")
+        df$method <- factor(df$method, names(.pal))
+    }
     return(df)
 }
 
