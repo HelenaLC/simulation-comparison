@@ -5,8 +5,8 @@ suppressPackageStartupMessages({
     library(tidyr)
 })
 
-# args <- list(
-#     res = list.files("results", "emd-", full.names = TRUE))
+# wcs <- list(stat_2d = "ks2")
+# args <- list(res = list.files("results", paste0(wcs$stat_2d, "-"), full.names = TRUE))
 
 pat <- ".*-(.*),(.*),(.*)\\.rds"
 refset  <- gsub(pat, "\\1", basename(args$res))
@@ -29,16 +29,16 @@ df$metrics <- paste(
 
 df <- df %>% 
     group_by(refset, method, group, metrics) %>% 
-    summarize_at("emd", mean) %>% 
+    summarize_at("stat", mean) %>% 
     ungroup() %>%
     complete(refset, method, group, metrics,
         fill = list(emd = NA))
 
 p <- ggplot(df, 
-    aes(method, metrics, fill = emd)) +
+    aes(method, metrics, fill = stat)) +
     facet_grid(group ~ refset) +
     geom_tile(color = "black", width = 1, height = 1) +
-    scale_fill_viridis_c("EMD", limits = c(0, NA), na.value = "grey95") +
+    scale_fill_viridis_c(limits = c(0, NA), na.value = "grey95") +
     coord_equal(expand = FALSE) +
     theme_linedraw(6) + theme(
         axis.title = element_blank(),
