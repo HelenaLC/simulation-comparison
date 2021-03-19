@@ -39,25 +39,34 @@ RUNS = {
 # 	refset = RUNS["ref"], method = RUNS["mid"]), metric = METRICS)
 #ks_dirs = expand("results/ks-{refset},{metric}.rds", refset = REFSETS, metric = METRICS)
 
+# one-/two-dimensional tests
+stats_1d = ["ks"]
+stats_2d = ["emd", "ks2"]
 
+stats_dirs_1d = \
+expand(
+	expand("results/stat_1d,{stat_1d}-{refset},{{type}}_{{metric}}.rds", 
+		stat_1d = stats_1d, refset= REFSETS),
+	zip, type = TYPE_METRIC, metric= METRICS)
 ks_dirs = expand(
 	expand("results/ks-{refset},{{type}}_{{metric}}.rds", refset= REFSETS),
 	zip, type = TYPE_METRIC, metric= METRICS)
 
 # [X] can we simplify this?
-emd_dirs = \
+
+stats_dirs_2d = \
 expand(
-	expand("results/{{comp_metric}}-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
+	expand("results/stat_2d,{{stat_2d}}-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
 		metric1 = [m[0] for m in gene_metrics_combi],
 		metric2 = [m[1] for m in gene_metrics_combi]),
-	comp_metric = ["emd"],
+	stat_2d = stats_2d,
 	type = ['gene'],
 	refset = REFSETS) + \
 expand(
-	expand("results/{{comp_metric}}-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
+	expand("results/stat_2d,{{stat_2d}}-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
 		metric1 = [m[0] for m in cell_metrics_combi],
 		metric2 = [m[1] for m in cell_metrics_combi]),
-	comp_metric = ["emd"],
+	stat_2d = stats_2d,
 	type = ['cell'],
 	refset = REFSETS)
 
@@ -89,12 +98,14 @@ rule all:
 			expand("plots/qc_{{refset}},{type}_{metric}.pdf",
 				zip,type=TYPE_METRIC,metric=METRICS
 				), refset = REFSETS),
-		ks_dirs, emd_dirs,
-		"results/ks_all_combined.rds",
+		#ks_dirs, 
+		#"results/ks_all_combined.rds",
+		stats_dirs_1d, stats_dirs_2d,
+		
 		expand("plots/ks_summary_{refset}.pdf", refset=REFSETS),
 		"plots/ks.pdf",
 		"plots/ks_heatmap.pdf",
-		"plots/emd.pdf"
+		expand("plots/summary_heatmap-{stat_2d}.pdf", stat_2d = stats_2d)
 
 		# expand(
 		# 	expand("results/{{comp_metric}}-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
@@ -263,64 +274,20 @@ rule qc_sim:
 
 # EVALUATION ===================================================================
 
-# one-dimensional --------------------------------------------------------------
-
-rule calc_ks:
-	input: "code/05-calc_ks.R",
+rule eval_1d:
+	input: "code/06-eval_1d.R",
 			ref = rules.qc_ref.output,
 			sim = lambda wc: [x for x in qc_sim_dirs \
 				if "{},{}_{}".format(wc.refset, wc.type, wc.metric) in x] # {refset},{{type}}_{{metric}}
 	params: lambda wc, input: ";".join(input.sim)
-	output: "results/ks-{refset},{type}_{metric}.rds"
-	log: "logs/05-calc_ks-{refset},{type}_{metric}.Rout"
+	output: "results/stat_1d,{stat_1d}-{refset},{type}_{metric}.rds"
+	log: "logs/06-eval_1d,{stat_1d}-{refset},{type}_{metric}.Rout"
 	shell: '''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	ref={input.ref} sim={params} res={output}" {input[0]} {log}'''
 
-# rule calc_ks:
-# 	input:	"code/05-calc_ks.R",
-# 			ref = rules.qc_ref.output,
-# 			sim = lambda wc: [x for x in qc_dirs \
-# 				if "{},{}".format(wc.refset,wc.metric) in x]
-# 	params: lambda wc, input: ";".join(input.sim)
-# 	output:	"results/ks-{refset},{metric}.rds"
-# 	log:	"logs/05-calc_ks-{refset},{metric}.Rout"
-# 	shell: 	'''
-# 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-# 	ref={input.ref} sim={params} res={output}" {input[0]} {log}'''
-#
-# rule calc_dy:
-# 	input:	"code/05-calc_dy.R",
-# 			x_ref = "results/qc-{refset},{metric1}.rds",
-# 			y_ref = "results/qc-{refset},{metric2}.rds",
-# 			x_sim = lambda wc: [x for x in qc_dirs \
-# 				if "{},{}".format(wc.refset,wc.metric1) in x],
-# 			y_sim = lambda wc: [x for x in qc_dirs \
-# 				if "{},{}".format(wc.refset,wc.metric2) in x]
-# 	params: x_sim = lambda wc, input: ";".join(input.x_sim),
-# 			y_sim = lambda wc, input: ";".join(input.y_sim)
-# 	output:	"results/dy-{refset},{metric1},{metric2}.rds"
-# 	log:	"logs/05-calc_dy-{refset},{metric1},{metric2}.Rout"
-# 	shell:	'''
-# 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-# 	x_ref={input.x_ref} y_ref={input.y_ref}\
-# 	x_sim={params.x_sim} y_sim={params.y_sim}\
-# 	res={output}" {input[0]} {log}'''
-
-rule combine_all:
-	input: "code/05-combine_all.R",
-			ref=ks_dirs
-	params: lambda wc,input: ";".join(input.ref)
-	output:  "results/ks_all_combined.rds"
-	log:    "logs/05-ks_all_combined.Rout"
-	shell:    '''
-	{R} CMD BATCH --no-restore --no-save "--args\
-	ref={params} res={output}" {input[0]} {log}'''
-
-# two-dimensional --------------------------------------------------------------
-
-rule calc_emd:
-	input:	"code/05-calc_{comp_metric}.R",
+rule eval_2d:
+	input:	"code/05-calc_{stat_2d}.R",
 			x_ref = "results/qc_ref-{refset},{type}_{metric1}.rds",
 			y_ref = "results/qc_ref-{refset},{type}_{metric2}.rds",
 			x_sim = lambda wc: [x for x in qc_sim_dirs \
@@ -329,8 +296,8 @@ rule calc_emd:
 				if "{},{}_{}".format(wc.refset,wc.type, wc.metric2) in x]
 	params: x_sim = lambda wc, input: ";".join(input.x_sim),
 			y_sim = lambda wc, input: ";".join(input.y_sim)
-	output:	"results/{comp_metric}-{refset},{type}_{metric1},{type}_{metric2}.rds"
-	log:	"logs/05-calc_{comp_metric}-{refset},{type}_{metric1},{type}_{metric2}.Rout"
+	output:	"results/stat_2d,{stat_2d}-{refset},{type}_{metric1},{type}_{metric2}.rds"
+	log:	"logs/05-eval_1d,{stat_2d}-{refset},{type}_{metric1},{type}_{metric2}.Rout"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	x_ref={input.x_ref} y_ref={input.y_ref}\
@@ -351,43 +318,44 @@ rule plot_qc:
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	ref={input.ref} sim={params} fig={output}" {input[0]} {log}'''
 
-rule plot_ks_sum:
-	input: "code/06-plot_ks_sum.R",
-			res = ks_dirs
-	params: lambda wc, input: ";".join(input.res)
-	output: "plots/ks_summary_{refset}.pdf"
-	log: "logs/06-plot_ks_summary_{refset}.Rout"
-	shell: '''
-	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	res={params} fig={output}" {input[0]} {log}'''
+# rule plot_ks_sum:
+# 	input: "code/06-plot_ks_sum.R",
+# 			res = ks_dirs
+# 	params: lambda wc, input: ";".join(input.res)
+# 	output: "plots/ks_summary_{refset}.pdf"
+# 	log: "logs/06-plot_ks_summary_{refset}.Rout"
+# 	shell: '''
+# 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+# 	res={params} fig={output}" {input[0]} {log}'''
 
-rule plot_ks_summary:
-	input:	"code/06-plot_ks_summary.R",
-			res = ks_dirs
-	params: lambda wc, input: ";".join(input.res)
-	output:	"plots/ks.pdf"
-	log:	"logs/06-plot_ks.Rout"
-	shell: 	'''
-	{R} CMD BATCH --no-restore --no-save "--args\
-	res={params} fig={output}" {input[0]} {log}'''
+# rule plot_ks_summary:
+# 	input:	"code/06-plot_ks_summary.R",
+# 			res = ks_dirs
+# 	params: lambda wc, input: ";".join(input.res)
+# 	output:	"plots/ks.pdf"
+# 	log:	"logs/06-plot_ks.Rout"
+# 	shell: 	'''
+# 	{R} CMD BATCH --no-restore --no-save "--args\
+# 	res={params} fig={output}" {input[0]} {log}'''
 
 
-rule plot_ks_heatmap:
-	input:	"code/06-plot_ks_heatmap.R",
-			res = rules.combine_all.output
-	params: lambda wc, input: ";".join(input.res)
-	output:	"plots/ks_heatmap.pdf"
-	log:	"logs/06-plot_ks_heatmap.Rout"
-	shell: 	'''
-	{R} CMD BATCH --no-restore --no-save "--args\
-	res={params} fig={output}" {input[0]} {log}'''
+# rule plot_ks_heatmap:
+# 	input:	"code/06-plot_ks_heatmap.R",
+# 			res = rules.combine_all.output
+# 	params: lambda wc, input: ";".join(input.res)
+# 	output:	"plots/ks_heatmap.pdf"
+# 	log:	"logs/06-plot_ks_heatmap.Rout"
+# 	shell: 	'''
+# 	{R} CMD BATCH --no-restore --no-save "--args\
+# 	res={params} fig={output}" {input[0]} {log}'''
 
 rule plot_emd:
 	input:	"code/06-plot_emd.R",
-			res = emd_dirs
+			res = lambda wc: filter(re.compile(\
+				wc.stat_2d + "-.*").search, stats_dirs_2d)
 	params:	lambda wc, input: ";".join(input.res)
-	output:	"plots/emd.pdf"
-	log: 	"logs/06-plot_emd.Rout"
+	output:	"plots/summary_heatmap-{stat_2d}.pdf"
+	log: 	"logs/06-plot_{stat_2d}.Rout"
 	shell: 	'''
 	{R} CMD BATCH --no-restore --no-save "--args\
 	res={params} fig={output}" {input[0]} {log}'''
