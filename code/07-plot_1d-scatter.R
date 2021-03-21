@@ -3,20 +3,22 @@ suppressPackageStartupMessages({
     library(ggplot2)
 })
 
-res <- lapply(args$res, readRDS)
-valid <- vapply(res, function(.) 
-    !isTRUE(is.na(.)), logical(1))
-res <- res[valid]
+# res <- lapply(args$res, readRDS)
+# nan <- vapply(res, function(.) 
+#     isTRUE(is.na(.)), logical(1))
+# res <- res[!nan]
+# 
+# refsets <- gsub(".*-(.*),.*\\.rds", "\\1", basename(args$res))
+# metrics <- gsub(".*,(.*)\\.rds", "\\1", basename(args$res))
+# refsets <- refsets[valid]
+# metrics <- metrics[valid]
+# 
+# ns <- vapply(res, nrow, numeric(1))
+# df <- mutate(bind_rows(res),
+#     refset = rep.int(refsets, ns),
+#     metric = rep.int(metrics, ns))
 
-refsets <- gsub(".*-(.*),.*\\.rds", "\\1", basename(args$res))
-metrics <- gsub(".*,(.*)\\.rds", "\\1", basename(args$res))
-refsets <- refsets[valid]
-metrics <- metrics[valid]
-
-ns <- vapply(res, nrow, numeric(1))
-df <- mutate(bind_rows(res),
-    refset = rep.int(refsets, ns),
-    metric = rep.int(metrics, ns))
+df <- readRDS(args$res)
 
 p <- ggplot(df, aes(method, stat, 
     shape = group, col = method)) +

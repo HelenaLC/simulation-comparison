@@ -1,31 +1,11 @@
 suppressPackageStartupMessages({
     library(dplyr)
     library(ggplot2)
-    library(matrixStats)
     library(tidyr)
 })
 
-# wcs <- list(stat_2d = "ks2")
-# args <- list(res = list.files("results", paste0(wcs$stat_2d, "-"), full.names = TRUE))
-
-pat <- ".*-(.*),(.*),(.*)\\.rds"
-refset  <- gsub(pat, "\\1", basename(args$res))
-metric1 <- gsub(pat, "\\2", basename(args$res))
-metric2 <- gsub(pat, "\\3", basename(args$res))
-
-res <- lapply(args$res, readRDS)
-ns <- vapply(res, function(.) 
-    ifelse(isTRUE(is.na(.)), 0, nrow(.)), 
-    numeric(1))
-
-df <- do.call(rbind, res)
-df <- df[!rowAlls(is.na(df)), ]
-
-df$refset <- rep(refset, ns)
-df$metrics <- paste(
-    rep.int(metric1, ns), 
-    rep.int(metric2, ns), 
-    sep = " vs. ")
+df <- readRDS(args$res)
+df$metrics <- with(df, paste(metric1, metric2, sep = " vs. "))
 
 df <- df %>% 
     group_by(refset, method, group, metrics) %>% 
