@@ -5,27 +5,26 @@ suppressPackageStartupMessages({
 })
 
 df <- readRDS(args$res)
-df <- mutate(df, type_metric = paste0(type, "_", metric))
+df <- mutate(df, metric = paste0(type, "_", metric))
 
 p <- df %>% 
-  group_by(refset, group, method, type_metric) %>%
+  group_by(refset, group, method, metric) %>%
   summarize_at("stat", mean) %>% 
   ungroup() %>%
-  tidyr::complete(method, refset, group, type_metric,
-                  fill = list(stat = NA)) %>% 
-  ggplot(aes(method, type_metric, fill = 1-stat)) +
+  complete(method, refset, group, metric,
+    fill = list(stat = NA)) %>% 
+  ggplot(aes(method, metric, fill = stat)) +
   facet_grid(group ~ refset) + 
   geom_tile(col = "black") +
-  scale_fill_distiller(
-    "1-KS", limits = c(0, 1),
-    palette = "RdYlBu", na.value = "grey95") +
-  coord_equal(2/3, expand = FALSE) +
+  scale_fill_viridis_c(na.value = "grey95") +
+  coord_equal(expand = FALSE) +
   theme_linedraw(6) + theme(
+    axis.title = element_blank(),
     axis.ticks = element_blank(),
     panel.grid = element_blank(),
     strip.background = element_blank(),
     strip.text = element_text(color = "black"),
-    axis.text.x = element_text(angle = 45, hjust = 1))
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.key.size = unit(0.5, "lines"))
 
-
-ggsave(args$fig, p, width = 15, height = 6, units = "cm")
+ggsave(args$fig, p, width = 15, height = 8, units = "cm")

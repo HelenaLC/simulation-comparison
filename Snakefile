@@ -44,16 +44,16 @@ qc_sim_dirs = expand(
 	zip , type = TYPE_METRIC, metric= METRICS)
 
 # one-/two-dimensional tests
-stats_1d = ["ks"]
-stats_2d = ["emd", "ks2"]
+stats_1d = glob_wildcards("code/06-stat_1d-{x}.R").x
+stats_2d = glob_wildcards("code/06-stat_2d-{x}.R").x
 
-stats_dirs_1d = \
+stats_1d_dirs = \
 expand(
 	expand("results/stat_1d,{stat_1d}-{refset},{{type}}_{{metric}}.rds", 
 		stat_1d = stats_1d, refset= REFSETS),
 	zip, type = TYPE_METRIC, metric= METRICS)
 
-stats_dirs_2d = \
+stats_2d_dirs = \
 expand(
 	expand("results/stat_2d,{{stat_2d}}-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
 		metric1 = [m[0] for m in gene_metrics_pairs],
@@ -91,7 +91,7 @@ rule all:
 # quality control
 		qc_ref_dirs, qc_sim_dirs,
 # evaluation
-		stats_dirs_1d, stats_dirs_2d,
+		stats_1d_dirs, stats_2d_dirs,
 		expand("results/06-comb_1d-{stat_1d}.rds", stat_1d = stats_1d),
 		expand("results/06-comb_2d-{stat_2d}.rds", stat_2d = stats_2d),
 # visualization
@@ -184,6 +184,7 @@ rule qc_sim:
 # one-dimensional test for each gene & cell metric
 rule eval_1d:
 	input: "code/06-eval_1d.R",
+			fun = "code/06-stat_1d-{stat_1d}.R",
 			ref = rules.qc_ref.output,
 			sim = lambda wc: [x for x in qc_sim_dirs \
 				if "{},{}_{}".format(wc.refset, wc.type, wc.metric) in x]
@@ -192,11 +193,12 @@ rule eval_1d:
 	log: "logs/06-eval_1d,{stat_1d}-{refset},{type}_{metric}.Rout"
 	shell: '''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	ref={input.ref} sim={params} res={output}" {input[0]} {log}'''
+	fun={input.fun} ref={input.ref} sim={params} res={output}" {input[0]} {log}'''
 
 # two-dimensional test for each pair of gene / cell metrics
 rule eval_2d:
-	input:	"code/05-calc_{stat_2d}.R",
+	input:	"code/06-eval_2d.R",
+			fun = "code/06-stat_2d-{stat_2d}.R",
 			x_ref = "results/qc_ref-{refset},{type}_{metric1}.rds",
 			y_ref = "results/qc_ref-{refset},{type}_{metric2}.rds",
 			x_sim = lambda wc: [x for x in qc_sim_dirs \
@@ -206,17 +208,17 @@ rule eval_2d:
 	params: x_sim = lambda wc, input: ";".join(input.x_sim),
 			y_sim = lambda wc, input: ";".join(input.y_sim)
 	output:	"results/stat_2d,{stat_2d}-{refset},{type}_{metric1},{type}_{metric2}.rds"
-	log:	"logs/05-eval_1d,{stat_2d}-{refset},{type}_{metric1},{type}_{metric2}.Rout"
+	log:	"logs/06-eval_2d,{stat_2d}-{refset},{type}_{metric1},{type}_{metric2}.Rout"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	x_ref={input.x_ref} y_ref={input.y_ref}\
 	x_sim={params.x_sim} y_sim={params.y_sim}\
-	res={output}" {input[0]} {log}'''
+	fun={input.fun} res={output}" {input[0]} {log}'''
 
 # for each statistic, combine results across datasets & methods
 rule comb_1d:
 	input:	"code/06-comb_1d.R",
-			res = lambda wc: [x for x in stats_dirs_1d \
+			res = lambda wc: [x for x in stats_1d_dirs \
 				if "stat_1d,{}-".format(wc.stat_1d) in x]
 	params:	lambda wc, input: ";".join(input.res)
 	output:	"results/06-comb_1d-{stat_1d}.rds"
@@ -227,7 +229,7 @@ rule comb_1d:
 
 rule comb_2d:
 	input:	"code/06-comb_2d.R",
-			res = lambda wc: [x for x in stats_dirs_2d \
+			res = lambda wc: [x for x in stats_2d_dirs \
 				if "stat_2d,{}-".format(wc.stat_2d) in x]
 	params:	lambda wc, input: ";".join(input.res)
 	output:	"results/06-comb_2d-{stat_2d}.rds"
@@ -239,13 +241,13 @@ rule comb_2d:
 # VISUALIZATION ================================================================
 
 rule plot_qc:
-	input: "code/05-plot_qc.R",
+	input: "code/07-plot_qc.R",
 	 		ref = rules.qc_ref.output, \
 	  		sim = lambda wc: [x for x in qc_sim_dirs \
 				if "{},{}_{}".format(wc.refset,wc.type,wc.metric) in x]
 	params: lambda wc, input: ";".join(input.sim)
 	output: "plots/qc_{refset},{type}_{metric}.pdf"
-	log: "logs/05-plot_qc-{refset},{type}_{metric}.Rout"
+	log: "logs/07-plot_qc-{refset},{type}_{metric}.Rout"
 	shell: '''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	ref={input.ref} sim={params} fig={output}" {input[0]} {log}'''

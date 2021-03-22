@@ -71,59 +71,7 @@
     return(df)
 }
 
-# EVALUATION ----
-
-# one-dimensional ----
-
-# + Kolmogorov-Smirnov test
-
-.ks <- function(x, y)
-{
-    z <- if (isTRUE(y == "pnorm")) 
-        list(mean = mean(x), sd = sd(x))
-    suppressWarnings(z <- do.call(ks.test, c(list(x, y), z)))
-    res <- as.numeric(z$statistic)
-    print("ks result")
-    print(res)
-    return(res)
-}
-
-# two-dimensional ----
-
-# compute earth mover distance between two matrices ref$x,y and sim$x,y as a distibution over a two-dimensional grid
-# ref and sim must have two columns (in each column one metric)
-
-.emd <- function(x, y, n = 25) {
-    stopifnot(is.numeric(n), length(n) == 1, n == as.integer(n))
-    if (is.null(dim(x))) {
-        # ONE-DIMENSIONAL
-        # smoothing
-        x <- density(x, n = n)$x
-        y <- density(y, n = n)$x
-        # compute EMD
-        ws <- rep(1/n, n)
-        x <- cbind(ws, x)
-        y <- cbind(ws, y)
-        emd(x, y)
-    } else {
-        # TWO-DIMENSIONAL
-        if (!is.matrix(x)) x <- as.matrix(x)
-        if (!is.matrix(y)) y <- as.matrix(y)
-        # smoothing over common range
-        rng <- c(
-            range(c(x[, 1], y[, 1])),
-            range(c(x[, 2], y[, 2])))
-        x <- kde2d(x[, 1], x[, 2], n = n, lims = rng)
-        y <- kde2d(y[, 1], y[, 2], n = n, lims = rng)
-        # compute EMD
-        emd2d(x$z, y$z)/n
-    }
-}
-
-# two-dimensional Kolmogorov-Smirnov two-sample test
-.ks2 <- function(x, y) Peacock.test::peacock2(x, y)
-
-# utils ----
+# utilities ----
 
 .split_cells <- function(x, i = c("cluster", "sample", "batch")){
     names(i) <- i <- intersect(i, names(colData(x)))

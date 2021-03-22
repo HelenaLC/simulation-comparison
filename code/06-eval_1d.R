@@ -26,7 +26,7 @@ df <- .read_res(args$ref, args$sim)
 print(head(df))
 }else{df <- NA}
 
-FUN <- get(paste0(".", wcs$stat_1d))
+source(args$fun)
 
 #TODO: take out this_metric != "cell_cms" once cms was implemented with proper parameters and does not only have zero values
 if (!is.na(df)) {
@@ -38,7 +38,7 @@ if (!is.na(df)) {
       group_keys(df)[[1]])
     i <- which(names(dfs) == "reference")
     vapply(dfs[-i], function(sim) 
-      FUN(sim[[this_metric]], 
+      fun(sim[[this_metric]], 
           dfs[[i]][[this_metric]]),
       numeric(1))
   })
