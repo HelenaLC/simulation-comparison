@@ -13,7 +13,7 @@ C_METRICS = glob_wildcards("code/05-cell_qc-{m}.R").m
 METRICS = G_METRICS + C_METRICS
 TYPE_METRIC = ["gene"] * len(G_METRICS) + ["cell"] * len(C_METRICS)
 
-ex = ["cor", "sil"]
+ex = ["cor", "sil", "pve"]
 
 gene_metrics_pairs = list(itertools.combinations([x for x in G_METRICS if x not in ex], 2))
 cell_metrics_pairs = list(itertools.combinations([x for x in C_METRICS if x not in ex], 2))
@@ -93,7 +93,7 @@ rule all:
 			refset = RUNS["ref"], method = RUNS["mid"]),
 # quality control
 		qc_ref_dirs, qc_sim_dirs,
-# evaluation
+# # evaluation
 		stats_1d_dirs, stats_2d_dirs,
 		expand("results/06-comb_1d-{stat_1d}.rds", stat_1d = stats_1d),
 		expand("results/06-comb_2d-{stat_2d}.rds", stat_2d = stats_2d),
