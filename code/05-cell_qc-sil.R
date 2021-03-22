@@ -14,15 +14,18 @@ suppressPackageStartupMessages({
 
 x <- readRDS(args$sce)
 
-if (is.null(x$cluster)) {
+if (is.null(x$cluster) && is.null(x$batch)) {
     qc <- NA
 } else {
+    i <- ifelse(
+        is.null(x$cluster), 
+        "batch", "cluster")
     x <- logNormCounts(x)
     x <- runPCA(x)
     FUN <- function(x) { 
-        kids <- as.integer(factor(x$cluster))
-        dmat <- dist(reducedDim(x, "PCA"))
-        swd <- silhouette(kids, dmat)
+        ids <- as.integer(factor(x[[i]]))
+        mtx <- dist(reducedDim(x, "PCA"))
+        swd <- silhouette(ids, mtx)
         return(swd[, "sil_width"])
     }
     nm <- paste(wcs$type, wcs$metric, sep = "_")

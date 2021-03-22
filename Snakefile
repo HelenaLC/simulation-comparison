@@ -163,21 +163,23 @@ rule sim_data:
 rule qc_ref:
 	priority: 1
 	input: "code/05-calc_qc.R",
-			sce = "data/02-sub/{refset}.rds"
+			sce = "data/02-sub/{refset}.rds",
+			fun = "code/05-{type}_qc-{metric}.R"
 	output: "results/qc_ref-{refset},{type}_{metric}.rds"
 	log: "logs/05_qc_ref-{refset},{type}_{metric}.Rout"
 	shell: '''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	sce={input.sce} res={output}" {input[0]} {log}'''
+	sce={input.sce} fun={input.fun} res={output}" {input[0]} {log}'''
 
 rule qc_sim:
 	input: "code/05-calc_qc.R",
-			sce = rules.sim_data.output
+			sce = rules.sim_data.output,
+			fun = "code/05-{type}_qc-{metric}.R"
 	output: "results/qc_sim-{refset},{type}_{metric},{method}.rds"
 	log: "logs/05-qc_sim-{refset},{type}_{metric},{method}.Rout"
 	shell: '''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	sce={input.sce} res={output}" {input[0]} {log}'''
+	sce={input.sce} fun={input.fun} res={output}" {input[0]} {log}'''
 
 # EVALUATION ===================================================================
 
