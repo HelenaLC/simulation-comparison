@@ -4,8 +4,7 @@ x <- .read_res(args$x_ref, args$x_sim)
 y <- .read_res(args$y_ref, args$y_sim)
 
 if (isTRUE(is.na(x)) || 
-    isTRUE(is.na(y)) || 
-    nrow(x) != nrow(y)) {
+    isTRUE(is.na(y))) {
   res <- NA
 } else {
   source(args$fun)

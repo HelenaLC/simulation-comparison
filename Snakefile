@@ -1,3 +1,4 @@
+import re
 import json
 import itertools
 
@@ -12,8 +13,10 @@ C_METRICS = glob_wildcards("code/05-cell_qc-{m}.R").m
 METRICS = G_METRICS + C_METRICS
 TYPE_METRIC = ["gene"] * len(G_METRICS) + ["cell"] * len(C_METRICS)
 
-gene_metrics_pairs = list(itertools.combinations(G_METRICS, 2))
-cell_metrics_pairs = list(itertools.combinations(C_METRICS, 2))
+ex = ["cor", "sil"]
+
+gene_metrics_pairs = list(itertools.combinations([x for x in G_METRICS if x not in ex], 2))
+cell_metrics_pairs = list(itertools.combinations([x for x in C_METRICS if x not in ex], 2))
 
 DATSETS = glob_wildcards("code/00-get_data-{d}.R").d
 SUBSETS = json.loads(open("config/subsets.json").read())
