@@ -2,6 +2,8 @@
 .snakemake
 
 *.txt
+*.html
+
 logs/*
 data/*
 plots/*
