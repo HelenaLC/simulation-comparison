@@ -33,6 +33,7 @@ if (isTRUE(is.na(x)) ||
           res <- bind_rows(res, .id = "method")
           cbind(.x[1, c("group", "id")], res)
       }) %>% bind_rows()
+  res <- data.frame(wcs, res)
 }
 
 print(res)
