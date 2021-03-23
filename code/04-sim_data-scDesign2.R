@@ -14,8 +14,11 @@ fun <- function(x)
         n_cell_new = sum(n), 
         cell_type_prop = prop.table(n))
     # construct SCE
-    cd <- if (length(x) > 1) 
+    cd <- if (length(x) == 1) {
+        make_zero_col_DFrame(ncol(y))
+    } else {
         data.frame(cluster = colnames(y))
+    }
     SingleCellExperiment(
         assay = list(counts = unname(y)),
         colData = cd)
