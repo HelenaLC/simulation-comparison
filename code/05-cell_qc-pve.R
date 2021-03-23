@@ -1,44 +1,20 @@
 suppressPackageStartupMessages({
-  library(variancePartition)
-  library(jsonlite)
-  library(SingleCellExperiment)
+  library(BiocParallel)
   library(scater)
+  library(SingleCellExperiment)
+  library(variancePartition)
 })
 
 x <- readRDS(args$sce)
-# x <- readRDS("data/02-sub/CellBench,H1975.rds")
-# form <- ~  lls+ (1|batch)
 
-
-
-# y <- fromJSON("/config/subsets.json")[[wcs$refset]]
-refset_type <- fromJSON("./config/subsets.json")[[wcs$refset]][[names(wcs)[2]]][["type"]]
-
-if(refset_type =="k" || refset_type =="b"){
-  
-  x <- logNormCounts(x)
-  i <- intersect(names(colData(x)) , c("batch", "cluster")) 
-  if(i == "batch"){
-    form <- ~   (1|batch)
-    meta_sub <- as.data.frame(colData(x)[, c("batch")])
-    colnames(meta_sub) <- "batch"
-  }else{
-      if(i == "cluster"){
-        form <- ~   (1|cluster)
-        meta_sub <- as.data.frame(colData(x)[, c("cluster")])
-        colnames(meta_sub) <- "cluster"  
-      }
-    #tbd: if batch and cluster (until now we don't have such a dataset)
-  }
-  
-  expr <- as.matrix(assays(x)$logcounts)
-  varPart <- fitExtractVarPartModel(expr, form, data = meta_sub)
-  
-  qc <- data.frame(group ="global", id = "foo", cell_pve = varPart[,i])  
-}else{
+if (is.null(x$cluster) && is.null(x$batch)) {
   qc <- NA
+} else {
+  x <- logNormCounts(x)
+  y <- as.matrix(logcounts(x))
+  i <- ifelse(is.null(x$cluster), "batch", "cluster")
+  f <- as.formula(sprintf("~(1|%s)", i))
+  cd <- data.frame(colData(x)[i])
+  pve <- fitExtractVarPartModel(y, f, cd, BPPARAM = SerialParam())
+  qc <- data.frame(group = "global", id = "foo", cell_pve = pve[, i])  
 }
-
-
-
-
