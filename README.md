@@ -30,6 +30,7 @@ Name        | clusters  | batches
 :---------: | :-------: | :-----:
 BASiCS      | no        | yes
 scDesign    | no        | no
+scDesign2   | yes       | no
 splatter    | no        | no
 SPsimSeq    | no        | yes
 SymSim      | no        | yes
