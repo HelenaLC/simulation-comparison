@@ -46,5 +46,6 @@ if (nrow(x) > 1e3)
 # keep cells with at least 10 detected genes
 x <- x[, colSums(counts(x) > 0) >= 10]
 print(dim(x))
+
 # save subsetted data to .rds
 saveRDS(x, args$sub)

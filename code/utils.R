@@ -2,7 +2,7 @@
 
 # + color palette
 .pal <- c(
-    reference = "black",
+    ref = "black",
     muscat = "royalblue",
     BASiCS = "maroon",
     SPsimSeq = "tomato",
@@ -58,7 +58,7 @@
     ids <- gsub(pat, "\\1", basename(sim))
     
     res <- lapply(c(ref, sim), readRDS)
-    names(res) <- c("reference", ids)
+    names(res) <- c("ref", ids)
     
     nan <- vapply(res, function(.) 
         isTRUE(is.na(.)), logical(1))

@@ -1,5 +1,6 @@
 {
 	"BASiCS": ["b"],
+	"scDesign": ["n"],
 	"SPARSim": ["n"],
 	"SPsimSeq": ["n", "b"],
 	"splatter": ["n"],

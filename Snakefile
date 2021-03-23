@@ -13,7 +13,7 @@ C_METRICS = glob_wildcards("code/05-cell_qc-{m}.R").m
 METRICS = G_METRICS + C_METRICS
 TYPE_METRIC = ["gene"] * len(G_METRICS) + ["cell"] * len(C_METRICS)
 
-ex = ["cor", "sil", "pve"]
+ex = ["cor", "sil"]
 
 gene_metrics_pairs = list(itertools.combinations([x for x in G_METRICS if x not in ex], 2))
 cell_metrics_pairs = list(itertools.combinations([x for x in C_METRICS if x not in ex], 2))
@@ -21,7 +21,7 @@ cell_metrics_pairs = list(itertools.combinations([x for x in C_METRICS if x not 
 DATSETS = glob_wildcards("code/00-get_data-{d}.R").d
 SUBSETS = json.loads(open("config/subsets.json").read())
 
-REFSETS = {"{},{}".format(d,s): t \
+REFSETS = {"{}.{}".format(d,s): t \
 	for d in SUBSETS.keys() \
 	for s in SUBSETS[d].keys() \
 	for t in SUBSETS[d][s]["type"]}
@@ -82,7 +82,7 @@ rule all:
 		expand("data/00-raw/{datset}.rds", datset = DATSETS),
 		expand("data/01-fil/{datset}.rds", datset = DATSETS),
 		expand(
-			"data/02-sub/{datset},{subset}.rds", zip,
+			"data/02-sub/{datset}.{subset}.rds", zip,
 			datset = SUBSETS["dat"], subset = SUBSETS["sub"]),
 # simulation
 		expand(
@@ -93,7 +93,7 @@ rule all:
 			refset = RUNS["ref"], method = RUNS["mid"]),
 # quality control
 		qc_ref_dirs, qc_sim_dirs,
-# # evaluation
+# evaluation
 		stats_1d_dirs, stats_2d_dirs,
 		expand("results/06-comb_1d-{stat_1d}.rds", stat_1d = stats_1d),
 		expand("results/06-comb_2d-{stat_2d}.rds", stat_2d = stats_2d),
@@ -129,8 +129,8 @@ rule sub_data:
 	input:	"code/02-sub_data.R",
 			fil = rules.fil_data.output
 	params:	con = "config/subsets.json"
-	output:	"data/02-sub/{datset},{subset}.rds"
-	log:	"logs/02-sub_data-{datset},{subset}.Rout"
+	output:	"data/02-sub/{datset}.{subset}.rds"
+	log:	"logs/02-sub_data-{datset}.{subset}.Rout"
 	shell: 	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	fil={input.fil} con={params.con} sub={output}" {input[0]} {log}'''
@@ -169,7 +169,7 @@ rule qc_ref:
 			sce = "data/02-sub/{refset}.rds",
 			fun = "code/05-{type}_qc-{metric}.R"
 	output: "results/qc_ref-{refset},{type}_{metric}.rds"
-	log: "logs/05_qc_ref-{refset},{type}_{metric}.Rout"
+	log: "logs/05-qc_ref-{refset},{type}_{metric}.Rout"
 	shell: '''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	sce={input.sce} fun={input.fun} res={output}" {input[0]} {log}'''

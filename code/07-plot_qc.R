@@ -13,30 +13,17 @@ suppressPackageStartupMessages({
 # args <- list(ref=c( "results/qc_ref-CellBench,H1975,cell_cms.rds"),
 #              sim=c( "results/qc_sim-CellBench,H1975,cell_cms,BASiCS.rds", "results/qc_sim-CellBench,H1975,cell_cms,SPsimSeq.rds"))
 
+df <- .read_res(args$ref, args$sim)
 
+if (is.na(df)) {
+    ggsave(args$fig, ggplot(), width = 5, height = 5, units = "cm")
+} else {
 
-metric_str = paste0(wcs$type, '_', wcs$metric)
-# pat <- sprintf(".*,(.*),%s\\.rds", wcs$metric)
-pat <- sprintf(".*,%s,", metric_str)
-
-ids <- gsub(pat, "\\1", basename(args$sim))
-ids <- gsub(".rds", "\\1", ids)
-ids
-# lab <- fromJSON(args$con)[[wcs$metric]]$lab
-lab <- metric_str
-
-
-res <- lapply(c(args$ref, args$sim), readRDS)
-
-if(!is.na(res)){
-
-names(res) <- c("reference", ids)
-df <- bind_rows(res, .id = "method")
-df$method <- factor(df$method, names(.pal))
+type_metric <- paste(wcs$type, wcs$metric, sep = "_")
 
 ps <- group_by(df, group, id) %>% 
     group_map(.keep = TRUE, ~{
-        ggplot(.x, aes_string(metric_str,
+        ggplot(.x, aes_string(type_metric,
             "..density../max(..density..)", col = "method")) +
             geom_density(key_glyph = "point") +
             scale_color_manual(values = .pal) +
@@ -44,18 +31,11 @@ ps <- group_by(df, group, id) %>%
             .prettify() + theme(aspect.ratio = 2/3) +
             guides(col = guide_legend(NULL,
                 override.aes = list(size = 2, alpha = 1))) +
-        labs(x = lab, y = "scaled density", title = paste0(
+        labs(x = type_metric, y = "scaled density", title = paste0(
             "level: ", .x$group[1], ", group: ", .x$id[1]))
     })
 
-# pdf(args$fig, width = 7/2.54, height = 4/2.54, onefile = TRUE)
 pdf(args$fig, width = 7, height = 5, onefile = TRUE)
 for (p in ps) print(p); dev.off()
 
-}else{
-    
-    df <- data.frame()
-    p <- ggplot(df) + geom_point() + xlim(0, 10) + ylim(0, 100)
-    ggsave(args$fig, p, width = 15, height = 20, units = "cm")
 }
-

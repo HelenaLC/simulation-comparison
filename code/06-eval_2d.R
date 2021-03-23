@@ -24,7 +24,7 @@ if (isTRUE(is.na(x)) ||
               group_split(df),
               group_keys(df)[[1]])
           
-          idx <- which(names(dfs) == "reference")
+          idx <- which(names(dfs) == "ref")
           ref <- dfs[[idx]]
       
           res <- lapply(dfs[-idx], function(sim)

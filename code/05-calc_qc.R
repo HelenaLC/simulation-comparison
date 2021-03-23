@@ -3,10 +3,12 @@ source(args$fun)
 if (is.na(qc)) {
     df <- NA
 } else {
+    ss <- strsplit(wcs$refset, "\\.")[[1]]
     method <- ifelse(is.null(wcs$method), "ref", wcs$method)
     df <- data.frame(
+        datset = ss[1],
+        subset = ss[2],
         refset = wcs$refset, 
-        subset = names(wcs)[2], 
         type = wcs$type, 
         metric = wcs$metric, 
         method, qc)

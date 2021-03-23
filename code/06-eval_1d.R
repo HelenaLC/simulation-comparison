@@ -36,7 +36,7 @@ if (!is.na(df)) {
     dfs <- setNames(
       group_split(df), 
       group_keys(df)[[1]])
-    i <- which(names(dfs) == "reference")
+    i <- which(names(dfs) == "ref")
     vapply(dfs[-i], function(sim) 
       fun(sim[[this_metric]], 
           dfs[[i]][[this_metric]]),
