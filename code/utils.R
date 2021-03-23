@@ -54,6 +54,8 @@
 
 .read_res <- function(ref, sim)
 {
+    suppressPackageStartupMessages(library(dplyr))
+    
     pat <- sprintf(".*,(.*)\\.rds")
     ids <- gsub(pat, "\\1", basename(sim))
     
@@ -67,6 +69,7 @@
     } else {
         df <- bind_rows(res, .id = "method")
         df$method <- factor(df$method, names(.pal))
+        df$group <- relevel(factor(df$group), "global")
     }
     return(df)
 }
