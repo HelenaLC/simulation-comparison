@@ -13,7 +13,7 @@ C_METRICS = glob_wildcards("code/05-cell_qc-{m}.R").m
 METRICS = G_METRICS + C_METRICS
 TYPE_METRIC = ["gene"] * len(G_METRICS) + ["cell"] * len(C_METRICS)
 
-ex = ["cor", "sil"]
+ex = ["cor", "sil", "pve"]
 
 gene_metrics_pairs = list(itertools.combinations([x for x in G_METRICS if x not in ex], 2))
 cell_metrics_pairs = list(itertools.combinations([x for x in C_METRICS if x not in ex], 2))
@@ -103,6 +103,18 @@ rule all:
 				"plots/qc_{{refset}},{type}_{metric}.pdf",
 				zip, type = TYPE_METRIC, metric = METRICS
 			), refset = REFSETS),
+		expand(
+			expand(
+				"plots/qc_2d-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.pdf", zip, 
+				metric1 = [m[0] for m in gene_metrics_pairs],
+				metric2 = [m[1] for m in gene_metrics_pairs]),
+			type = "gene", refset = REFSETS),
+		expand(
+			expand(
+				"plots/qc_2d-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.pdf", zip,
+				metric1 = [m[0] for m in cell_metrics_pairs],
+				metric2 = [m[1] for m in cell_metrics_pairs]), 
+			type = "cell", refset = REFSETS),
 		expand("plots/stat_1d-{plot_1d},{stat_1d}.pdf", plot_1d = plots_1d, stat_1d = stats_1d),
 		expand("plots/stat_2d-{plot_2d},{stat_2d}.pdf", plot_2d = plots_2d, stat_2d = stats_2d)
 
@@ -245,7 +257,7 @@ rule comb_2d:
 
 # VISUALIZATION ================================================================
 
-rule plot_qc:
+rule plot_qc_1d:
 	input: "code/07-plot_qc.R",
 	 		ref = rules.qc_ref.output, \
 	  		sim = lambda wc: [x for x in qc_sim_dirs \
@@ -256,6 +268,24 @@ rule plot_qc:
 	shell: '''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	ref={input.ref} sim={params} fig={output}" {input[0]} {log}'''
+
+rule plot_qc_2d:
+	input: "code/07-plot_qc_2d-by_refset.R",
+			x_ref = "results/qc_ref-{refset},{type}_{metric1}.rds",
+			y_ref = "results/qc_ref-{refset},{type}_{metric2}.rds",
+			x_sim = lambda wc: [x for x in qc_sim_dirs \
+				if "{},{}_{}".format(wc.refset,wc.type, wc.metric1) in x],
+			y_sim = lambda wc: [x for x in qc_sim_dirs \
+				if "{},{}_{}".format(wc.refset,wc.type, wc.metric2) in x]
+	params: x_sim = lambda wc, input: ";".join(input.x_sim),
+			y_sim = lambda wc, input: ";".join(input.y_sim)
+	output: "plots/qc_2d-{refset},{type}_{metric1},{type}_{metric2}.pdf"
+	log: "logs/07-plot_qc_2d-{refset},{type}_{metric1},{type}_{metric2}.Rout"
+	shell: '''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+	x_ref={input.x_ref} y_ref={input.y_ref}\
+	x_sim={params.x_sim} y_sim={params.y_sim}\
+	fig={output}" {input[0]} {log}'''
 
 rule plot_1d:
 	input:	"code/07-plot_1d-{plot_1d}.R",
