@@ -13,7 +13,12 @@ df <- do.call(rbind, res)
 df <- df[rowSums(is.na(df)) != ncol(df), ]
 
 df$refset <- rep(refset, ns)
+ss <- strsplit(df$refset, "\\.")
+df$datset <- sapply(ss, .subset, 1)
+df$subset <- sapply(ss, .subset, 2)
+
 df$metric1 <- rep.int(metric1, ns)
 df$metric2 <- rep.int(metric2, ns)
+df$metrics <- with(df, paste(metric1, metric2, sep = " vs. "))
 
 saveRDS(df, args[[2]])
