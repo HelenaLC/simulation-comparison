@@ -4,8 +4,8 @@ suppressPackageStartupMessages({
   library(SingleCellExperiment)
 })
 
-fun <- function(x) {
-    
+fun <- function(x)
+{
     y <- counts(x)
     if (!is.matrix(y))
         y <- as.matrix(y)

@@ -46,6 +46,9 @@ qc_sim_dirs = expand(
 		zip, refset = RUNS["ref"], method = RUNS["mid"]),
 	zip , type = TYPE_METRIC, metric= METRICS)
 
+dr_ref_dirs = expand("results/dr_ref-{refset}.rds", refset = REFSETS)
+dr_sim_dirs = expand("results/dr_sim-{refset},{method}.rds", zip, refset = RUNS["ref"], method = RUNS["mid"])
+
 # one-/two-dimensional tests
 stats_1d = glob_wildcards("code/06-stat_1d-{x}.R").x
 stats_2d = glob_wildcards("code/06-stat_2d-{x}.R").x
@@ -93,10 +96,11 @@ rule all:
 			refset = RUNS["ref"], method = RUNS["mid"]),
 # quality control
 		qc_ref_dirs, qc_sim_dirs,
+		dr_ref_dirs, dr_sim_dirs,
 # evaluation
 		stats_1d_dirs, stats_2d_dirs,
-		expand("results/06-comb_1d-{stat_1d}.rds", stat_1d = stats_1d),
-		expand("results/06-comb_2d-{stat_2d}.rds", stat_2d = stats_2d),
+		expand("results/comb_1d-{stat_1d}.rds", stat_1d = stats_1d),
+		expand("results/comb_2d-{stat_2d}.rds", stat_2d = stats_2d),
 # visualization
 		expand(
 			expand(
@@ -115,6 +119,7 @@ rule all:
 				metric1 = [m[0] for m in cell_metrics_pairs],
 				metric2 = [m[1] for m in cell_metrics_pairs]), 
 			type = "cell", refset = REFSETS),
+		expand("plots/dr-{refset}.pdf", refset = REFSETS),
 		expand("plots/stat_1d-{plot_1d},{stat_1d}.pdf", plot_1d = plots_1d, stat_1d = stats_1d),
 		expand("plots/stat_2d-{plot_2d},{stat_2d}.pdf", plot_2d = plots_2d, stat_2d = stats_2d)
 
@@ -196,6 +201,26 @@ rule qc_sim:
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	sce={input.sce} fun={input.fun} res={output}" {input[0]} {log}'''
 
+# DIMENSIONALITY REDUCTION =====================================================
+
+rule dr_ref:
+	input: 	"code/05-calc_dr.R",
+			"data/02-sub/{refset}.rds"
+	output:	"results/dr_ref-{refset}.rds"
+	log:	"logs/05-dr_ref-{refset}.Rout"
+	shell:	'''
+	{R} CMD BATCH --no-restore --no-save "--args\
+	sce={input[1]} res={output}" {input[0]} {log}'''
+
+rule dr_sim:
+	input: 	"code/05-calc_dr.R",
+			rules.sim_data.output
+	output:	"results/dr_sim-{refset},{method}.rds"
+	log:	"logs/05-dr_sim-{refset},{method}.Rout"
+	shell:	'''
+	{R} CMD BATCH --no-restore --no-save "--args\
+	sce={input[1]} res={output}" {input[0]} {log}'''
+
 # EVALUATION ===================================================================
 
 # one-dimensional test for each gene & cell metric
@@ -238,7 +263,7 @@ rule comb_1d:
 			res = lambda wc: [x for x in stats_1d_dirs \
 				if "stat_1d,{}-".format(wc.stat_1d) in x]
 	params:	lambda wc, input: ";".join(input.res)
-	output:	"results/06-comb_1d-{stat_1d}.rds"
+	output:	"results/comb_1d-{stat_1d}.rds"
 	log:	"logs/06-comb_1d-{stat_1d}.Rout"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args\
@@ -249,7 +274,7 @@ rule comb_2d:
 			res = lambda wc: [x for x in stats_2d_dirs \
 				if "stat_2d,{}-".format(wc.stat_2d) in x]
 	params:	lambda wc, input: ";".join(input.res)
-	output:	"results/06-comb_2d-{stat_2d}.rds"
+	output:	"results/comb_2d-{stat_2d}.rds"
 	log:	"logs/06-comb_2d-{stat_2d}.Rout"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args\
@@ -274,9 +299,9 @@ rule plot_qc_2d:
 			x_ref = "results/qc_ref-{refset},{type}_{metric1}.rds",
 			y_ref = "results/qc_ref-{refset},{type}_{metric2}.rds",
 			x_sim = lambda wc: [x for x in qc_sim_dirs \
-				if "{},{}_{}".format(wc.refset,wc.type, wc.metric1) in x],
+				if "{},{}_{}".format(wc.refset, wc.type, wc.metric1) in x],
 			y_sim = lambda wc: [x for x in qc_sim_dirs \
-				if "{},{}_{}".format(wc.refset,wc.type, wc.metric2) in x]
+				if "{},{}_{}".format(wc.refset, wc.type, wc.metric2) in x]
 	params: x_sim = lambda wc, input: ";".join(input.x_sim),
 			y_sim = lambda wc, input: ";".join(input.y_sim)
 	output: "plots/qc_2d-{refset},{type}_{metric1},{type}_{metric2}.pdf"
@@ -287,6 +312,17 @@ rule plot_qc_2d:
 	x_sim={params.x_sim} y_sim={params.y_sim}\
 	fig={output}" {input[0]} {log}'''
 
+rule plot_dr:
+	input:	"code/07-plot_dr.R",
+			ref = rules.dr_ref.output,
+			sim = lambda wc: [x for x in dr_sim_dirs if wc.refset in x]
+	params:	lambda wc, input: ";".join(input.sim)
+	output:	"plots/dr-{refset}.pdf"
+	log:	"logs/07-plot_dr-{refset}.Rout"
+	shell:	'''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+	ref={input.ref} sim={params} fig={output}" {input[0]} {log}'''
+
 rule plot_1d:
 	input:	"code/07-plot_1d-{plot_1d}.R",
 			res = rules.comb_1d.output
@@ -296,7 +332,6 @@ rule plot_1d:
 	shell: 	'''
 	{R} CMD BATCH --no-restore --no-save "--args\
 	res={params} fig={output}" {input[0]} {log}'''
-
 
 rule plot_2d:
 	input:	"code/07-plot_2d-{plot_2d}.R",

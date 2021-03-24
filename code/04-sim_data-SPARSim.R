@@ -9,6 +9,7 @@ fun <- function(x) {
     y <- SPARSim_simulation(x)
     sink()
     
+    y <- y$count_matrix
     SingleCellExperiment(
-        assays = list(counts = y$count_matrix))
+        assays = list(counts = y))
 }
