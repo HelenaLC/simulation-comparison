@@ -5,13 +5,14 @@
     ref = "black",
     muscat = "royalblue",
     BASiCS = "maroon",
-    SPsimSeq = "tomato",
-    splatter = "orange",
     scDesign = "gold",
-    SymSim = "green",
+    scDesign2 = "orange",
     SPARSim = "blue",
-    powsimR ="grey", 
-    POWSC="chocolate")
+    splatter = "brown",
+    SPsimSeq = "tomato",
+    SymSim = "green",
+    POWSC = "chocolate",
+    powsimR ="grey")
 
 # theme for quality control plots
 .prettify <- function(theme = NULL, ...) 
