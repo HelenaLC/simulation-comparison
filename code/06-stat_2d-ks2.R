@@ -1,1 +1,1 @@
-fun <- function(x, y) Peacock.test::peacock2(x, y)
+fun <- function(x, y) { 1 - Peacock.test::peacock2(x, y) }
