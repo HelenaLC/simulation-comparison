@@ -23,8 +23,8 @@ writeLines(capture.output(sessionInfo()), args[[1]])
 # pkgs <- c(
 #     "BASiCS",
 #     "CellBench",
+#     "dyngen", "dplyr",
 #     "emdist", "ExperimentHub",
-#     "dplyr",
 #     "jsonlite",
 #     "ggplot2",
 #     "matrixStats",
