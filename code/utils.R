@@ -12,7 +12,8 @@
     SPsimSeq = "tomato",
     SymSim = "green",
     POWSC = "chocolate",
-    powsimR ="grey")
+    powsimR ="grey",
+    dyngen = "coral")
 
 # theme for quality control plots
 .prettify <- function(theme = NULL, ...) 
