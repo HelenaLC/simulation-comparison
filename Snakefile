@@ -74,6 +74,7 @@ expand(
 	stat_2d = stats_2d,
 	type = ['cell'],
 	refset = REFSETS)
+stats_dr_dirs = expand("results/stat_dr-{datset}.{subset}.rds",zip ,datset = SUBSETS["dat"],subset= SUBSETS["sub"])
 
 plots_1d = glob_wildcards("code/07-plot_1d-{x}.R").x
 plots_2d = glob_wildcards("code/07-plot_2d-{x}.R").x
@@ -98,7 +99,7 @@ rule all:
 		qc_ref_dirs, qc_sim_dirs,
 		dr_ref_dirs, dr_sim_dirs,
 # evaluation
-		stats_1d_dirs, stats_2d_dirs,
+		stats_1d_dirs, stats_2d_dirs, stats_dr_dirs,
 		expand("results/comb_1d-{stat_1d}.rds", stat_1d = stats_1d),
 		expand("results/comb_2d-{stat_2d}.rds", stat_2d = stats_2d),
 # visualization
@@ -256,6 +257,21 @@ rule eval_2d:
 	x_ref={input.x_ref} y_ref={input.y_ref}\
 	x_sim={params.x_sim} y_sim={params.y_sim}\
 	fun={input.fun} res={output}" {input[0]} {log}'''
+#"results/dr_sim-{refset},{method}.rds"
+rule eval_dr:
+	input: "code/06-eval_dr.R",
+			sce_ref = "data/02-sub/{datset}.{subset}.rds",
+			dr_ref= "results/dr_ref-{datset}.{subset}.rds",
+			dr_sim = lambda wc: [x for x in dr_sim_dirs \
+				if "{}.{}".format(wc.datset, wc.subset) in x]
+	params: lambda wc, input: ";".join(input.dr_sim)
+	output: "results/stat_dr-{datset}.{subset}.rds"
+	log: "logs/06-eval_dr-{datset}.{subset}.Rout"
+	shell: '''
+		{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+		dr_ref={input.dr_ref} dr_sim={params} sce_ref={input.sce_ref}\
+		res={output}" {input[0]} {log}'''
+
 
 # for each statistic, combine results across datasets & methods
 rule comb_1d:

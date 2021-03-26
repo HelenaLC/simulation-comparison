@@ -9,8 +9,5 @@ fun <- function(x) {
     format = "sce", 
     make_plots = FALSE)
   sink()
-  
-  sim <- SingleCellExperiment(list(counts=sim$dataset$counts))
-  
-  return(sim)
+  return(y)
 }

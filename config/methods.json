@@ -8,5 +8,6 @@
 	"splatter": ["n", "b", "k"],
 	"SymSim": ["n"],
 	"POWSC": ["k"],
-	"powsimR": ["n"]
+	"powsimR": ["n"],
+	"dyngen":  ["n"]
 }
