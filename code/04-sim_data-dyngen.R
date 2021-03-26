@@ -9,5 +9,5 @@ fun <- function(x) {
     format = "sce", 
     make_plots = FALSE)
   sink()
-  return(y)
+  return(y$dataset)
 }

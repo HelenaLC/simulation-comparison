@@ -20,7 +20,7 @@ x <- logNormCounts(x)
 
 print("dim of sce")
 print(dim(x))
-
+numcol <- ncol(x)
 dr_eval <- function(x, data_type){
   if(data_type=="k"){
     res <- dreval(x, refType = "assay", refAssay = "logcounts", labelColumn ="cluster")
@@ -53,20 +53,21 @@ for (sim in args$dr_sim) {
   dr <- readRDS(sim)
   print("dim of dr")
   print(dim(dr))
-  # reducedDims(x) <- list(TSNE=dr[,c("TSNE1","TSNE2")])
-  # 
   method <- gsub(pattern=".*,(.*).rds", x=basename(sim), replacement = '\\1')
   print(method)
-  # this is not working yet because of different dimensions of dr...
-  # res <- dr_eval(x, data_type) %>%
-  #           rename(., dr_method=Method) %>%
-  #           mutate(.,
-  #               method = method,
-  #               group = "global",
-  #               id = "foo",
-  #               refset = paste0(wcs$datset, ".", wcs$subset))
-  # df <- rbind(df, res)
-
+  # TBD : some methods do have different amount of cells... TODO: fix that
+  if(nrow(dr) == numcol){
+    reducedDims(x) <- list(TSNE=dr[,c("TSNE1","TSNE2")])
+    res <- dr_eval(x, data_type) %>%
+                rename(., dr_method=Method) %>%
+                mutate(.,
+                    method = method,
+                    group = "global",
+                    id = "foo",
+                    refset = paste0(wcs$datset, ".", wcs$subset))
+      df <- rbind(df, res)
+      
+  }
 }
 
 

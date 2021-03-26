@@ -110,7 +110,7 @@ rule all:
 			), refset = REFSETS),
 		expand(
 			expand(
-				"plots/qc_2d-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.pdf", zip, 
+				"plots/qc_2d-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.pdf", zip,
 				metric1 = [m[0] for m in gene_metrics_pairs],
 				metric2 = [m[1] for m in gene_metrics_pairs]),
 			type = "gene", refset = REFSETS),
@@ -118,11 +118,12 @@ rule all:
 			expand(
 				"plots/qc_2d-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.pdf", zip,
 				metric1 = [m[0] for m in cell_metrics_pairs],
-				metric2 = [m[1] for m in cell_metrics_pairs]), 
+				metric2 = [m[1] for m in cell_metrics_pairs]),
 			type = "cell", refset = REFSETS),
 		expand("plots/dr-{refset}.pdf", refset = REFSETS),
 		expand("plots/stat_1d-{plot_1d},{stat_1d}.pdf", plot_1d = plots_1d, stat_1d = stats_1d),
-		expand("plots/stat_2d-{plot_2d},{stat_2d}.pdf", plot_2d = plots_2d, stat_2d = stats_2d)
+		expand("plots/stat_2d-{plot_2d},{stat_2d}.pdf", plot_2d = plots_2d, stat_2d = stats_2d),
+		expand("plots/stat_dr-{refset}.pdf", refset = REFSETS)
 
 # PREPROCESSING ================================================================
 
@@ -257,7 +258,7 @@ rule eval_2d:
 	x_ref={input.x_ref} y_ref={input.y_ref}\
 	x_sim={params.x_sim} y_sim={params.y_sim}\
 	fun={input.fun} res={output}" {input[0]} {log}'''
-#"results/dr_sim-{refset},{method}.rds"
+
 rule eval_dr:
 	input: "code/06-eval_dr.R",
 			sce_ref = "data/02-sub/{datset}.{subset}.rds",
@@ -358,6 +359,15 @@ rule plot_2d:
 	shell: 	'''
 	{R} CMD BATCH --no-restore --no-save "--args\
 	res={params} fig={output}" {input[0]} {log}'''
+
+rule plot_dr_eval:
+	input: "code/07-plot_dr_eval.R",
+			res = "results/stat_dr-{refset}.rds"
+	output: "plots/stat_dr-{refset}.pdf"
+	log:    "logs/07-plot_dr-{refset}.Rout"
+	shell: '''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+	res={input.res} fig={output}" {input[0]} {log}'''
 
 # SESSION INFO =================================================================
 
