@@ -1,10 +1,11 @@
 {
 	"BASiCS": ["b"],
+	"dyngen":  ["t"],
 	"scDesign": ["n"],
 	"scDesign2": ["n", "k"],
 	"SPARSim": ["n"],
 	"SPsimSeq": ["n", "b"],
-	"splatter": ["n"],
+	"splatter": ["n", "b", "k"],
 	"SymSim": ["n"],
 	"POWSC": ["k"],
 	"powsimR": ["n"]

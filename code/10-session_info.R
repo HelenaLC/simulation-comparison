@@ -2,6 +2,7 @@ suppressPackageStartupMessages({
     library(emdist)
     library(ExperimentHub)
     library(dplyr)
+    library(dyngen)
     library(jsonlite)
     library(ggplot2)
     library(matrixStats)

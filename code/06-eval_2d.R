@@ -14,9 +14,9 @@ if (isTRUE(is.na(x)) ||
     mutate(y = y[[paste(wcs$type,  wcs$metric2, sep = "_")]])
   xy <- c("x", "y")
   
-  sub <- df[sample(nrow(df), 1e3), ]
+  sub <- df[sample(nrow(df), min(1e3, nrow(df))), ]
   
-  res <- sub %>% 
+  res <- df %>% 
       group_by(group, id) %>% 
       group_map(.keep = TRUE, ~{
           df <- group_by(.x, .x$method)
@@ -26,10 +26,13 @@ if (isTRUE(is.na(x)) ||
           
           idx <- which(names(dfs) == "ref")
           ref <- dfs[[idx]]
-      
-          res <- lapply(dfs[-idx], function(sim)
-              data.frame(stat = fun(ref[, xy], sim[, xy])))
-              
+          
+          res <- lapply(dfs[-idx], function(sim) {
+              stat <- tryCatch(
+                  error = function(e) NA,
+                  fun(ref[, xy], sim[, xy]))
+              data.frame(stat)
+          })
           res <- bind_rows(res, .id = "method")
           cbind(.x[1, c("group", "id")], res)
       }) %>% bind_rows()

@@ -5,6 +5,7 @@
     ref = "black",
     muscat = "royalblue",
     BASiCS = "maroon",
+    dyngen = "coral",
     scDesign = "gold",
     scDesign2 = "orange",
     SPARSim = "blue",

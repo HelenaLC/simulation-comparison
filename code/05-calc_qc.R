@@ -1,6 +1,6 @@
 source(args$fun)
 
-if (is.na(qc)) {
+if (isTRUE(is.na(qc))) {
     df <- NA
 } else {
     ss <- strsplit(wcs$refset, "\\.")[[1]]

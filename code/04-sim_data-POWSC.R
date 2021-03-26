@@ -19,10 +19,10 @@ fun <- function(x) {
             ncol(.$exprs), numeric(1))
         
         y <- SimulateMultiSCEs(
-            n = sum(ns),
+            n = sum(ns)/(length(x)-1),
             estParas_set = x,
             multiProb = ns)
-    
+
         y <- lapply(y, function(.) .$sce)
         y <- do.call(cbind, y)
         

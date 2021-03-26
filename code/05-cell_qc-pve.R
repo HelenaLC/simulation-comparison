@@ -15,6 +15,6 @@ if (is.null(x$cluster) && is.null(x$batch)) {
   i <- ifelse(is.null(x$cluster), "batch", "cluster")
   f <- as.formula(sprintf("~(1|%s)", i))
   cd <- data.frame(colData(x)[i])
-  pve <- fitExtractVarPartModel(y, f, cd, BPPARAM = SerialParam())
-  qc <- data.frame(group = "global", id = "foo", cell_pve = pve[, i])  
+  pve <- fitExtractVarPartModel(y[rowSums(y) != 0, ], f, cd, BPPARAM = SerialParam())
+  qc <- data.frame(group = "global", id = "foo", cell_pve = pve[, i]) 
 }
