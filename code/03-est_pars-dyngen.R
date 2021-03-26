@@ -5,8 +5,8 @@ suppressPackageStartupMessages({
 fun <- function(x){
    
   backbone <- backbone_bifurcating_loop()
-  num_cells <- nrow(x)
-  num_feats <- ncol(x)
+  num_cells <- ncol(x)
+  num_feats <- nrow(x)
   num_tfs <- nrow(backbone$module_info)
   num_tar <- round((num_feats - num_tfs) / 2)
   num_hks <- num_feats - num_tfs - num_tar
