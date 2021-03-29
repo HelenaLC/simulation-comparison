@@ -1,6 +1,7 @@
 {
 	"BASiCS": ["b"],
 	"dyngen":  ["t"],
+	"ESCO": ["n"],
 	"scDesign": ["n"],
 	"scDesign2": ["n", "k"],
 	"SPARSim": ["n"],
@@ -8,6 +9,5 @@
 	"splatter": ["n", "b", "k"],
 	"SymSim": ["n"],
 	"POWSC": ["k"],
-	"powsimR": ["n"],
-	"dyngen":  ["n"]
+	"powsimR": ["n"]
 }
