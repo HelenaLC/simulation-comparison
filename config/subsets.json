@@ -7,7 +7,6 @@
 			"batch": ["indrop"]
 		}
 	},
-
 	"CellBench":{
 		"H1975":{
 			"type": ["b"],
@@ -15,12 +14,16 @@
 			"cluster": ["H1975"]
 		}
 	},
-	
 	"Kang18":{
 	    "1015":{
 	        "type": ["k"],
 	        "ncells": "200",
 	        "batch": "1015"
 	    }
+	},
+	"Trapnell14":{
+		"foo":{
+			"type": ["t"]
+		}
 	}
 }
