@@ -6,6 +6,7 @@
     muscat = "royalblue",
     BASiCS = "maroon",
     dyngen = "coral",
+    ESCO = "brown2",
     scDesign = "gold",
     scDesign2 = "orange",
     SPARSim = "blue",
