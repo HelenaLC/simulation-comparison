@@ -24,13 +24,13 @@ writeLines(capture.output(sessionInfo()), args[[1]])
 # pkgs <- c(
 #     "BASiCS",
 #     "CellBench",
-#     "emdist", "ExperimentHub",
+#     "emdist", "JINJINT/ESCO", "ExperimentHub",
 #     "dplyr",
 #     "jsonlite",
 #     "ggplot2",
 #     "matrixStats",
 #     "patchwork", "Peacock.test", "suke18/POWSC", "purrr", "bvieth/powsimR",
-#     "Vivianstats/scDesign", "JSB-UCLA/scDesign2",
+#     "Vivianstats/scDesign", "JSB-UCLA/scDesign2", "waddR",
 #     "scater", "scran", "Seurat", "satijalab/seurat-data", "splatter", "SPsimSeq", "YosefLab/SymSim",
 #     "tidyr", "variancePartition")
 # 
