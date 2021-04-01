@@ -4,6 +4,7 @@
 	"ESCO": ["n"],
 	"scDesign": ["n"],
 	"scDesign2": ["n", "k"],
+	"SERGIO": ["n"],
 	"SPARSim": ["n"],
 	"SPsimSeq": ["n", "b"],
 	"splatter": ["n"],
