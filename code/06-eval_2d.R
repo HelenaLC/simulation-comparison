@@ -1,43 +1,42 @@
-suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages({
+    library(dplyr)
+    library(purrr)
+    library(tidyr)
+})
 
 x <- .read_res(args$x_ref, args$x_sim)
 y <- .read_res(args$y_ref, args$y_sim)
 
-if (isTRUE(is.na(x)) || 
-    isTRUE(is.na(y))) {
-  res <- NA
+if (is.null(x) || is.null(y)) {
+    res <- NULL
 } else {
-  source(args$fun)
-
-  df <- x %>%
-    rename(x = paste(wcs$type, wcs$metric1, sep = "_")) %>%
-    mutate(y = y[[paste(wcs$type,  wcs$metric2, sep = "_")]])
-  xy <- c("x", "y")
-  
-  sub <- df[sample(nrow(df), min(1e3, nrow(df))), ]
-  
-  res <- df %>% 
-      group_by(group, id) %>% 
-      group_map(.keep = TRUE, ~{
-          df <- group_by(.x, .x$method)
-          dfs <- setNames(
-              group_split(df),
-              group_keys(df)[[1]])
-          
-          idx <- which(names(dfs) == "ref")
-          ref <- dfs[[idx]]
-          
-          res <- lapply(dfs[-idx], function(sim) {
-              stat <- tryCatch(
-                  error = function(e) NA,
-                  fun(ref[, xy], sim[, xy]))
-              data.frame(stat)
-          })
-          res <- bind_rows(res, .id = "method")
-          cbind(.x[1, c("group", "id")], res)
-      }) %>% bind_rows()
-  res <- data.frame(wcs, res)
+    # source evaluation function
+    source(args$fun)
+    # for each grouping, test simulation vs. reference
+    df <- list(x = x, y = y) %>% 
+        bind_rows(.id = "dim") %>% 
+        pivot_wider(
+            id_cols = c("group", "id"),
+            names_from = c("dim", "method"),
+            values_from = "value",
+            values_fn = list) %>% 
+        rename_at(
+            vars(contains(wcs$method)), 
+            function(.) gsub(wcs$method, "sim", .))
+    stat <- apply(df, 1, function(.)
+        fun(cbind(.$x_ref, .$y_ref),
+            cbind(.$x_sim, .$y_sim)))
+    df <- mutate(df, stat) %>% 
+        select_if(negate(is.list)) %>% 
+        mutate(select(x[1, ], -c(method, value)))    
+    # add metadata
+    ss <- strsplit(wcs$refset, "\\.")[[1]]
+    res <- data.frame(wcs, df) %>% 
+        mutate(.before = refset, datset = ss[1], subset = ss[2]) %>% 
+        mutate(.after = id, group.id = paste(group, id, sep = ".")) %>% 
+        mutate(.after = metric1, type.metric1 = paste(type, metric1, sep = ".")) %>% 
+        mutate(.after = metric2, type.metric2 = paste(type, metric2, sep = "."))
 }
 
-print(res)
+print(head(res))
 saveRDS(res, args$res)

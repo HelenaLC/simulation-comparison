@@ -1,6 +1,8 @@
 suppressPackageStartupMessages({
     library(emdist)
+    library(ESCO)
     library(ExperimentHub)
+    library(dreval)
     library(dplyr)
     library(dyngen)
     library(jsonlite)
@@ -8,15 +10,21 @@ suppressPackageStartupMessages({
     library(matrixStats)
     library(patchwork)
     library(Peacock.test)
-    library(POWSC)
+    #library(POWSC)
+    library(powsimR)
     library(purrr)
     library(scater)
+    library(scDesign)
+    library(scDesign2)
     library(scran)
     library(SeuratData)
     library(splatter)
     library(SPsimSeq)
     library(SymSim)
+    library(TENxPBMCData)
     library(tidyr)
+    library(variancePartition)
+    library(waddR)
 })
 
 writeLines(capture.output(sessionInfo()), args[[1]])
@@ -25,14 +33,14 @@ writeLines(capture.output(sessionInfo()), args[[1]])
 #     "BASiCS",
 #     "CellBench",
 #     "emdist", "JINJINT/ESCO", "ExperimentHub",
-#     "dplyr",
+#     "dplyr", "csoneson/dreval",
 #     "jsonlite",
 #     "ggplot2",
 #     "matrixStats",
 #     "patchwork", "Peacock.test", "suke18/POWSC", "purrr", "bvieth/powsimR",
-#     "Vivianstats/scDesign", "JSB-UCLA/scDesign2", "waddR",
+#     "Vivianstats/scDesign", "JSB-UCLA/scDesign2", 
 #     "scater", "scran", "Seurat", "satijalab/seurat-data", "splatter", "SPsimSeq", "YosefLab/SymSim",
-#     "tidyr", "variancePartition")
+#     "TENxPBMCData", "tidyr", "variancePartition", "waddR")
 # 
 # install.packages("BiocManager")
 # BiocManager::install(pkgs, ask = FALSE, dependencies = TRUE)

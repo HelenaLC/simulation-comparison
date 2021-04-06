@@ -2,7 +2,7 @@ suppressPackageStartupMessages(library(ggplot2))
 
 df <- readRDS(args$res)
 
-p <- ggplot(df, aes(type_metric, stat, fill = group, col = group)) +
+p <- ggplot(df, aes(type.metric, stat, fill = group, col = group)) +
     facet_wrap(~ method) + 
     geom_boxplot(size = 0.25, outlier.size = 0.5,
         width = 0.75, alpha = 0.5, key_glyph = "point") +

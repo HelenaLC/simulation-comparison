@@ -5,15 +5,15 @@ suppressPackageStartupMessages({
 })
 
 df <- readRDS(args$res)
-df <- mutate(df, metric = paste0(type, "_", metric))
 
-p <- df %>% 
+df <- df %>% 
   group_by(refset, group, method, metric) %>%
   summarize_at("stat", mean) %>% 
   ungroup() %>%
-  complete(method, refset, group, metric,
-    fill = list(stat = NA)) %>% 
-  ggplot(aes(method, metric, fill = stat)) +
+  complete(method, refset, group, metric, fill = list(stat = NA))
+  
+p <- ggplot(df,
+  aes(method, metric, fill = stat)) +
   facet_grid(group ~ refset) + 
   geom_tile(col = "black") +
   scale_fill_viridis_c(na.value = "grey95") +

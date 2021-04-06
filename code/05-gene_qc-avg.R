@@ -1,22 +1,17 @@
 suppressPackageStartupMessages({
-  library(scater)
-  library(purrr)
-  library(dplyr)
-  library(SingleCellExperiment)
+    library(scater)
 })
 
-# setwd("~/Desktop/LabRotation_Robinson/simulation-comparison")
-# args <- list(
-#     sce = "data/02-sub/CellBench,H1975.rds",
-#     con = "config/metrics.json")
-# wcs <- list(metric = "gene_frq")
+ppFUN <- function(sce) {
+    cpm <- calculateCPM(sce)
+    assay(sce, "cpm") <- cpm
+    return(sce)
+}
 
-x <- readRDS(args$sce)
-cpm <- calculateCPM(x)
-assay(x, "cpm") <- cpm
+qcFUN <- function(sce) {
+    rowMeans(log(cpm(sce) + 1))
+}
 
-qc_func <- function(x){return(rowMeans(log(cpm(x) + 1) ))}
-
-qc <- .calc_qc_for_splits(x=x, metric_name="gene_avg", FUN=qc_func) 
-# print(dim(qc))
-# saveRDS(qc, args$res)
+groups <- NULL
+n_genes <- NULL
+n_cells <- NULL

@@ -1,48 +1,24 @@
 suppressPackageStartupMessages({
-  library(edgeR) 
-  library(purrr)
-  library(dplyr)
-  library(SingleCellExperiment)
+  library(matrixStats)
+  library(scater)
 })
 
-# setwd("~/Desktop/LabRotation_Robinson/simulation-comparison")
-# args <- list(
-#     sce = "data/02-sub/CellBench,H1975.rds",
-#     res = "results/qc_ref-CellBench,H1975,gene_cor.rds",
-#     con = "config/metrics.json")
+ppFUN <- function(sce) {
+  cpm <- calculateCPM(sce)
+  if (!is.matrix(cpm))
+    cpm <- as.matrix(cpm)
+  assay(sce, "cpm") <- cpm
+  sce[rowVars(cpm) > 0, ]
+}
 
-# wcs <- list(maxNForCorr=20)
-# wcs <- list(type = "cell", metric = "frq")
+qcFUN <- function(sce) {
+  cpm <- log(cpm(sce)+1)
+  cor <- cor(t(cpm),
+    method = "spearman",
+    use = "pairwise.complete.obs")
+  cor[upper.tri(cor)]
+}
 
-
-maxNForCorr <- 20
-x <- readRDS(args$sce)
-
-
-
-## Calculate logCPMs
-cpms <- edgeR::cpm(counts(x), prior.count = 2, log = TRUE)
-dim(cpms)
-
-## split by group = "cluster","batch", "sample". 
-cs <- .split_cells(x)
-
-qc <- map_depth(cs, -1, function(c){
-  n <- min(nrow(cpms), maxNForCorr)
-  gs <- sample(seq_len(nrow(cpms)), n, replace = FALSE)
-  sub <- cpms[gs, ]
-  
-  sub <- sub[, c]
-  ## Calculate Spearman correlations
-  corrs <- stats::cor(t(sub), use = "pairwise.complete.obs",
-                      method = "spearman")
-  df <- data.frame(
-    t(combn(seq_len(n), m=2)), 
-    gene_cor= corrs[upper.tri(corrs)]
-  )
-  
-})
-
-qc <- .combine_res_of_splits(qc)
-# print(qc)
-# saveRDS(qc, args$res)
+groups <- NULL
+n_genes <- 200
+n_cells <- NULL

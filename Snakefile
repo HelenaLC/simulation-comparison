@@ -55,29 +55,39 @@ stats_2d = glob_wildcards("code/06-stat_2d-{x}.R").x
 
 stats_1d_dirs = \
 expand(
-	expand("results/stat_1d,{stat_1d}-{refset},{{type}}_{{metric}}.rds", 
-		stat_1d = stats_1d, refset= REFSETS),
-	zip, type = TYPE_METRIC, metric= METRICS)
+	expand(
+		expand(
+			"results/stat_1d,{{{{stat_1d}}}}-{refset},{{type}}_{{metric}},{method}.rds", 
+			zip, refset = RUNS["ref"], method = RUNS["mid"]),
+		zip, type = TYPE_METRIC, metric= METRICS), 
+	stat_1d = stats_1d)
 
 stats_2d_dirs = \
 expand(
-	expand("results/stat_2d,{{stat_2d}}-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
+	expand(
+		expand("results/stat_2d,{{{{stat_2d}}}}-{refset},{{{{type}}}}_{{metric1}},{{{{type}}}}_{{metric2}},{method}.rds", 
+			zip, refset = RUNS["ref"], method = RUNS["mid"]),
+		zip,
 		metric1 = [m[0] for m in gene_metrics_pairs],
 		metric2 = [m[1] for m in gene_metrics_pairs]),
 	stat_2d = stats_2d,
-	type = ['gene'],
-	refset = REFSETS) + \
+	type = ['gene']) + \
 expand(
-	expand("results/stat_2d,{{stat_2d}}-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.rds", zip,
+	expand(
+		expand("results/stat_2d,{{{{stat_2d}}}}-{refset},{{{{type}}}}_{{metric1}},{{{{type}}}}_{{metric2}},{method}.rds", 
+			zip, refset = RUNS["ref"], method = RUNS["mid"]),
+		zip,
 		metric1 = [m[0] for m in cell_metrics_pairs],
 		metric2 = [m[1] for m in cell_metrics_pairs]),
 	stat_2d = stats_2d,
-	type = ['cell'],
-	refset = REFSETS)
+	type = ['cell'])
+
 stats_dr_dirs = expand("results/stat_dr-{datset}.{subset}.rds",zip ,datset = SUBSETS["dat"],subset= SUBSETS["sub"])
 
 plots_1d = glob_wildcards("code/07-plot_1d-{x}.R").x
 plots_2d = glob_wildcards("code/07-plot_2d-{x}.R").x
+
+plots_qc_1d = glob_wildcards("code/07-plot_qc_1d-{x}.R").x
 
 rule all:
 	input:
@@ -100,14 +110,15 @@ rule all:
 		dr_ref_dirs, dr_sim_dirs,
 # evaluation
 		stats_1d_dirs, stats_2d_dirs, stats_dr_dirs,
-		expand("results/comb_1d-{stat_1d}.rds", stat_1d = stats_1d),
-		expand("results/comb_2d-{stat_2d}.rds", stat_2d = stats_2d),
+		#expand("results/comb_1d-{stat_1d}.rds", stat_1d = stats_1d),
+		#expand("results/comb_2d-{stat_2d}.rds", stat_2d = stats_2d),
 # visualization
-		expand(
-			expand(
-				"plots/qc_{{refset}},{type}_{metric}.pdf",
-				zip, type = TYPE_METRIC, metric = METRICS
-			), refset = REFSETS),
+		expand("plots/qc_1d-{plot_qc_1d},{refset}.pdf", plot_qc_1d = plots_qc_1d, refset = REFSETS),
+		# expand(
+		# 	expand(
+		# 		"plots/qc_{{refset}},{type}_{metric}.pdf",
+		# 		zip, type = TYPE_METRIC, metric = METRICS
+		# 	), refset = REFSETS),
 		expand(
 			expand(
 				"plots/qc_2d-{{refset}},{{type}}_{metric1},{{type}}_{metric2}.pdf", zip,
@@ -128,6 +139,7 @@ rule all:
 # PREPROCESSING ================================================================
 
 rule get_data:
+	priority: 99
 	input:	"code/00-get_data-{datset}.R"
 	output:	"data/00-raw/{datset}.rds"
 	log:	"logs/00-get_data-{datset}.Rout"
@@ -136,6 +148,7 @@ rule get_data:
 	{output}" {input} {log}'''
 
 rule fil_data:
+	priority: 98
 	input:	"code/01-fil_data.R",
 			raw = rules.get_data.output
 	output:	"data/01-fil/{datset}.rds"
@@ -145,6 +158,7 @@ rule fil_data:
 	raw={input.raw} fil={output}" {input[0]} {log}'''
 
 rule sub_data:
+	priority: 97
 	input:	"code/02-sub_data.R",
 			fil = rules.fil_data.output
 	params:	con = "config/subsets.json"
@@ -157,7 +171,7 @@ rule sub_data:
 # SIMULATION ===================================================================
 
 rule est_pars:
-	priority: -4
+	priority: 96
 	input:	"code/03-est_pars.R",
 			sce = "data/02-sub/{refset}.rds",
 			fun = "code/03-est_pars-{method}.R"
@@ -168,7 +182,7 @@ rule est_pars:
 	sce={input.sce} fun={input.fun} est={output}" {input[0]} {log}'''
 
 rule sim_data:
-	priority: -5
+	priority: 95
 	input:	"code/04-sim_data.R",
 			est = rules.est_pars.output,
 			sub = "data/02-sub/{refset}.rds",
@@ -183,7 +197,7 @@ rule sim_data:
 # QUALITY CONTROL ==============================================================
 
 rule qc_ref:
-	priority: 1
+	priority: 94
 	input: "code/05-calc_qc.R",
 			sce = "data/02-sub/{refset}.rds",
 			fun = "code/05-{type}_qc-{metric}.R"
@@ -194,6 +208,7 @@ rule qc_ref:
 	sce={input.sce} fun={input.fun} res={output}" {input[0]} {log}'''
 
 rule qc_sim:
+	priority: 94
 	input: "code/05-calc_qc.R",
 			sce = rules.sim_data.output,
 			fun = "code/05-{type}_qc-{metric}.R"
@@ -206,6 +221,7 @@ rule qc_sim:
 # DIMENSIONALITY REDUCTION =====================================================
 
 rule dr_ref:
+	priority: 94
 	input: 	"code/05-calc_dr.R",
 			"data/02-sub/{refset}.rds"
 	output:	"results/dr_ref-{refset}.rds"
@@ -215,6 +231,7 @@ rule dr_ref:
 	sce={input[1]} res={output}" {input[0]} {log}'''
 
 rule dr_sim:
+	priority: 94	
 	input: 	"code/05-calc_dr.R",
 			rules.sim_data.output
 	output:	"results/dr_sim-{refset},{method}.rds"
@@ -227,39 +244,36 @@ rule dr_sim:
 
 # one-dimensional test for each gene & cell metric
 rule eval_1d:
+	priority: 93
 	input: "code/06-eval_1d.R",
 			fun = "code/06-stat_1d-{stat_1d}.R",
 			ref = rules.qc_ref.output,
-			sim = lambda wc: [x for x in qc_sim_dirs \
-				if "{},{}_{}".format(wc.refset, wc.type, wc.metric) in x]
-	params: lambda wc, input: ";".join(input.sim)
-	output: "results/stat_1d,{stat_1d}-{refset},{type}_{metric}.rds"
-	log: "logs/06-eval_1d,{stat_1d}-{refset},{type}_{metric}.Rout"
+			sim = rules.qc_sim.output
+	output: "results/stat_1d,{stat_1d}-{refset},{type}_{metric},{method}.rds"
+	log: "logs/06-eval_1d,{stat_1d}-{refset},{type}_{metric},{method}.Rout"
 	shell: '''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	fun={input.fun} ref={input.ref} sim={params} res={output}" {input[0]} {log}'''
+	fun={input.fun} ref={input.ref} sim={input.sim} res={output}" {input[0]} {log}'''
 
 # two-dimensional test for each pair of gene / cell metrics
 rule eval_2d:
+	priority: 93
 	input:	"code/06-eval_2d.R",
 			fun = "code/06-stat_2d-{stat_2d}.R",
 			x_ref = "results/qc_ref-{refset},{type}_{metric1}.rds",
 			y_ref = "results/qc_ref-{refset},{type}_{metric2}.rds",
-			x_sim = lambda wc: [x for x in qc_sim_dirs \
-				if "{},{}_{}".format(wc.refset,wc.type, wc.metric1) in x],
-			y_sim = lambda wc: [x for x in qc_sim_dirs \
-				if "{},{}_{}".format(wc.refset,wc.type, wc.metric2) in x]
-	params: x_sim = lambda wc, input: ";".join(input.x_sim),
-			y_sim = lambda wc, input: ";".join(input.y_sim)
-	output:	"results/stat_2d,{stat_2d}-{refset},{type}_{metric1},{type}_{metric2}.rds"
-	log:	"logs/06-eval_2d,{stat_2d}-{refset},{type}_{metric1},{type}_{metric2}.Rout"
+			x_sim = "results/qc_sim-{refset},{type}_{metric1},{method}.rds",
+			y_sim = "results/qc_sim-{refset},{type}_{metric2},{method}.rds"
+	output:	"results/stat_2d,{stat_2d}-{refset},{type}_{metric1},{type}_{metric2},{method}.rds"
+	log:	"logs/06-eval_2d,{stat_2d}-{refset},{type}_{metric1},{type}_{metric2},{method}.Rout"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	x_ref={input.x_ref} y_ref={input.y_ref}\
-	x_sim={params.x_sim} y_sim={params.y_sim}\
+	x_sim={input.x_sim} y_sim={input.y_sim}\
 	fun={input.fun} res={output}" {input[0]} {log}'''
 
 rule eval_dr:
+	priority: 93
 	input: "code/06-eval_dr.R",
 			sce_ref = "data/02-sub/{datset}.{subset}.rds",
 			dr_ref= "results/dr_ref-{datset}.{subset}.rds",
@@ -276,6 +290,7 @@ rule eval_dr:
 
 # for each statistic, combine results across datasets & methods
 rule comb_1d:
+	priority: 92
 	input:	"code/06-comb_1d.R",
 			res = lambda wc: [x for x in stats_1d_dirs \
 				if "stat_1d,{}-".format(wc.stat_1d) in x]
@@ -287,6 +302,7 @@ rule comb_1d:
 	{params} {output}" {input[0]} {log}'''
 
 rule comb_2d:
+	priority: 92
 	input:	"code/06-comb_2d.R",
 			res = lambda wc: [x for x in stats_2d_dirs \
 				if "stat_2d,{}-".format(wc.stat_2d) in x]
@@ -300,16 +316,17 @@ rule comb_2d:
 # VISUALIZATION ================================================================
 
 rule plot_qc_1d:
-	input: "code/07-plot_qc.R",
-	 		ref = rules.qc_ref.output, \
-	  		sim = lambda wc: [x for x in qc_sim_dirs \
-				if "{},{}_{}".format(wc.refset,wc.type,wc.metric) in x]
-	params: lambda wc, input: ";".join(input.sim)
-	output: "plots/qc_{refset},{type}_{metric}.pdf"
-	log: "logs/07-plot_qc-{refset},{type}_{metric}.Rout"
+	input: "code/07-plot_qc_1d-{plot_qc_1d}.R",
+			utils = "code/utils-plotting.R",
+	 		ref = lambda wc: [x for x in qc_ref_dirs if wc.refset in x],
+	  		sim = lambda wc: [x for x in qc_sim_dirs if wc.refset in x]
+	params: ref = lambda wc, input: ";".join(input.ref),
+			sim = lambda wc, input: ";".join(input.sim)
+	output: "plots/qc_1d-{plot_qc_1d},{refset}.pdf"
+	log: "logs/07-plot_qc_1d-{plot_qc_1d},{refset}.Rout"
 	shell: '''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	ref={input.ref} sim={params} fig={output}" {input[0]} {log}'''
+	utils={input.utils} ref={params.ref} sim={params.sim} fig={output}" {input[0]} {log}'''
 
 rule plot_qc_2d:
 	input: "code/07-plot_qc_2d-by_refset.R",
@@ -372,6 +389,7 @@ rule plot_dr_eval:
 # SESSION INFO =================================================================
 
 rule session_info:
+	priority: 100
 	input:	"code/10-session_info.R"
 	output:	"session_info.txt"
 	log:	"logs/10-session_info.Rout"

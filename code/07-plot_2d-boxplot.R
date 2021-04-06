@@ -1,6 +1,10 @@
-suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages({
+    library(dplyr)
+    library(ggplot2)
+})
 
-df <- readRDS(args$res)
+df <- readRDS(args$res) %>% 
+    mutate(metrics = paste(type.metric1, type.metric2, sep = " vs. "))
 
 ggplot(df,
     aes(method, stat, fill = group, col = group)) +

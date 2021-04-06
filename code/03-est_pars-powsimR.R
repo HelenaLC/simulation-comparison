@@ -3,13 +3,17 @@ suppressPackageStartupMessages({
   library(SingleCellExperiment)
 })
 
-fun <- function(x){
-  p <- estimateParam(countData = as.matrix(counts(x)), 
-                         RNAseq = 'singlecell',
-                         Protocol = 'UMI',
-                         Distribution = 'NB',
-                         Normalisation = 'scran',
-                         GeneFilter = 0.1) # TODO check params 
-  
-  return(p)
+fun <- function(x) {
+  y <- counts(x)
+  if (!is.matrix(y))
+    y <- as.matrix(y)
+  estimateParam(
+    countData = y, 
+    RNAseq = "singlecell",
+    Protocol = "UMI",
+    Distribution = "NB",
+    Normalisation = "scran",
+    GeneFilter = 0.1,
+    NCores = 1,
+    verbose = FALSE)
 }

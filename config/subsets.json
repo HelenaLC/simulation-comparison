@@ -14,6 +14,16 @@
 			"cluster": ["H1975"]
 		}
 	},
+	"Haber17":{
+		"stem":{
+			"type": ["n"],
+			"cluster": "Stem"
+		},
+		"goblet":{
+			"type": ["n"],
+			"cluster": "Goblet"
+		}
+	},
 	"Kang18":{
 	    "1015":{
 	        "type": ["k"],
@@ -21,9 +31,10 @@
 	        "batch": "1015"
 	    }
 	},
-	"Trapnell14":{
+	"Zheng17":{
 		"foo":{
-			"type": ["t"]
+			"type": ["k"],
+			"ncells": "200"
 		}
 	}
 }

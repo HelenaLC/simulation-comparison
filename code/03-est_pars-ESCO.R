@@ -3,20 +3,18 @@ suppressPackageStartupMessages({
   library(SingleCellExperiment)
 })
 
-fun <- function(x){
-  
-  # if(!is.null(x$batch)){
-  #   param <- escoEstimate(as.matrix(counts(x)), group=TRUE, cellinfo = x$batch)
-  #   type = "group"
-  # }
-  # if(!is.null(x$cluster)){
-  #   param <- escoEstimate(as.matrix(counts(x)), group=TRUE, cellinfo = x$cluster)
-  #   type = "group"
-  # 
-  # }else{
-    param <- escoEstimate(as.matrix(counts(x)))  
-    type = "single" 
-  # }
-  
-  return(list(param = param, type = type))
+fun <- function(x) {
+    y <- counts(x)
+    if (!is.matrix(y))
+        y <- as.matrix(y)
+    dir <- tempdir()
+    if (!is.null(x$batch)) {
+        type <- "batch"
+    } else if (!is.null(x$cluster)) {
+        type <- "cluster"
+    } else type <- "single"
+    group <- type != "single"
+    cellinfo <- x[[type]]
+    suppressMessages(z <- escoEstimate(y, dir, group, cellinfo))
+    list(params = z, type = type, groups = unique(x[[type]]))
 }

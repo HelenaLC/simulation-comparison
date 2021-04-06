@@ -5,14 +5,13 @@ suppressPackageStartupMessages({
 })
 
 df <- readRDS(args$res)
-df$metrics <- with(df, paste(metric1, metric2, sep = " vs. "))
 
 df <- df %>% 
+    mutate(metrics = paste(type.metric1, type.metric2, sep = " vs. ")) %>% 
     group_by(refset, method, group, metrics) %>% 
     summarize_at("stat", mean) %>% 
     ungroup() %>%
-    complete(refset, method, group, metrics,
-        fill = list(emd = NA))
+    complete(refset, method, group, metrics, fill = list(stat = NA))
 
 p <- ggplot(df, 
     aes(method, metrics, fill = stat)) +

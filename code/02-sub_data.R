@@ -39,9 +39,9 @@ if (!is.null(y$ncells)) {
 # keep genes with count > 1 in at least 10 cells,
 x <- x[rowSums(counts(x) > 1) >= 10, ]
 
-# downsample to at most 1k genes
-if (nrow(x) > 1e3)
-    x <- x[sample(nrow(x), 1e3), ]
+# downsample to at most 2k genes
+if (nrow(x) > 2e3)
+    x <- x[sample(nrow(x), 2e3), ]
 
 # keep cells with at least 10 detected genes
 x <- x[, colSums(counts(x) > 0) >= 10]

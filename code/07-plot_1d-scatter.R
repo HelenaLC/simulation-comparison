@@ -22,7 +22,7 @@ df <- readRDS(args$res)
 
 p <- ggplot(df, aes(method, stat, 
     shape = group, col = method)) +
-    facet_grid(metric ~ refset) +
+    facet_grid(type.metric ~ refset) +
     geom_point(size = 1, 
         position = position_dodge(0.5)) + 
     scale_color_manual(values = .pal) +
