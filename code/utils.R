@@ -10,6 +10,7 @@
     scDD = "yellowgreen",
     scDesign = "gold",
     scDesign2 = "orange",
+    SEGIO = "seagreen4",
     SPARSim = "blue",
     splatter = "brown",
     SPsimSeq = "tomato",
