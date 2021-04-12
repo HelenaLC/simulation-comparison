@@ -1,0 +1,19 @@
+name: prosstt
+channels:
+  - conda-forge
+  - defaults
+  - bioconda
+dependencies:
+  - python=3.6
+  - numpy
+  - scipy
+  - pandas
+  - matplotlib
+  - python-newick
+  - jupyter
+  - anndata
+  - scanpy
+  - pip
+  - pip:
+      - git+git://github.com/soedinglab/prosstt.git
+
