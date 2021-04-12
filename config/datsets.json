@@ -1,0 +1,40 @@
+{
+	"panc8":{
+		"indrop_alpha":{
+			"type": ["n"],
+			"ncells": null,
+			"cluster": ["alpha"],
+			"batch": ["indrop"]
+		}
+	},
+	"CellBench":{
+		"H1975":{
+			"type": ["b"],
+			"ncells": null,
+			"cluster": ["H1975"]
+		}
+	},
+	"Haber17":{
+		"stem":{
+			"type": ["n"],
+			"cluster": "Stem"
+		},
+		"goblet":{
+			"type": ["n"],
+			"cluster": "Goblet"
+		}
+	},
+	"Kang18":{
+	    "1015":{
+	        "type": ["k"],
+	        "ncells": "200",
+	        "batch": "1015"
+	    }
+	},
+	"Zheng17":{
+		"foo":{
+			"type": ["k"],
+			"ncells": "200"
+		}
+	}
+}

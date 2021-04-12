@@ -1,5 +1,6 @@
 {
 	"BASiCS": ["b"],
+	"MFA": ["n"],
 	"scDD": ["n"],
 	"scDesign": ["n"],
 	"scDesign2": ["n", "k"],
@@ -8,5 +9,7 @@
 	"SPsimSeq": ["n", "b"],
 	"splatter": ["n"],
 	"SymSim": ["n"],
-	"powsimR": ["n"]
+	"powsimR": ["n"],
+	"ZINB-WaVE": ["n", "b", "k"],
+	"zingeR": ["n"]
 }
