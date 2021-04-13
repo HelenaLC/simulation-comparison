@@ -33,14 +33,14 @@ writeLines(capture.output(sessionInfo()), args[[1]])
 #     "BASiCS",
 #     "CellBench",
 #     "emdist", "JINJINT/ESCO", "ExperimentHub",
-#     "dplyr", "csoneson/dreval",
+#     "dplyr", "csoneson/dreval","dyngen",
 #     "jsonlite",
 #     "ggplot2",
 #     "matrixStats",
 #     "patchwork", "Peacock.test", "suke18/POWSC", "purrr", "bvieth/powsimR",
 #     "Vivianstats/scDesign", "JSB-UCLA/scDesign2", 
 #     "scater", "scran", "Seurat", "satijalab/seurat-data", "splatter", "SPsimSeq", "YosefLab/SymSim",
-#     "TENxPBMCData", "tidyr", "variancePartition", "waddR")
+#     "TENxPBMCData", "tidyr", "variancePartition", "waddR", "tidytext")
 # 
 # install.packages("BiocManager")
 # BiocManager::install(pkgs, ask = FALSE, dependencies = TRUE)
