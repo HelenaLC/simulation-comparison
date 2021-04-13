@@ -1,8 +1,9 @@
-source("code/utils.R")
+source("scripts/utils.R")
 data.table::setDTthreads(threads = 1)
 
 .get_wcs <- function(wcs) {
-    ss <- strsplit(wcs, ",")[[1]]
+	wcs <- gsub("(,)(\\w+=)", ";\\2", wcs)
+    ss <- strsplit(wcs, ";")[[1]]
     ss <- sapply(ss, strsplit, "=")
     keys <- sapply(ss, .subset, 1)
     vals <- sapply(ss, .subset, 2)
@@ -14,7 +15,7 @@ data.table::setDTthreads(threads = 1)
 args <- R.utils::commandArgs(
 	trailingOnly = TRUE, 
 	asValues = TRUE)
-
+print(args$wcs)
 if (!is.null(args$wcs)) {
 	wcs <- .get_wcs(args$wcs)
 	args$wcs <- NULL

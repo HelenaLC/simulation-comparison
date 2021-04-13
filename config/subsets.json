@@ -1,40 +1,87 @@
 {
-	"panc8":{
-		"indrop_alpha":{
-			"type": ["n"],
-			"ncells": null,
-			"cluster": ["alpha"],
-			"batch": ["indrop"]
-		}
-	},
-	"CellBench":{
-		"H1975":{
-			"type": ["b"],
-			"ncells": null,
-			"cluster": ["H1975"]
-		}
-	},
-	"Haber17":{
-		"stem":{
-			"type": ["n"],
-			"cluster": "Stem"
+	"CellBench": {
+		"H1975": {
+			"type": "b",
+			"n_cells": "100",
+			"n_genes": "1000",
+			"cluster": "H1975"
 		},
-		"goblet":{
-			"type": ["n"],
-			"cluster": "Goblet"
+		"H2228": {
+			"type": "b",
+			"n_cells": "100",
+			"n_genes": "1000",
+			"cluster": "H2228"
+		},
+		"HCC827": {
+			"type": "b",
+			"n_cells": "100",
+			"n_genes": "1000",
+			"cluster": "HCC827"
+		},
+		"10x": {
+			"type": "k",
+			"n_cells": "100",
+			"n_genes": "1000",
+			"batch": "sc_10x"
+		},
+		"celseq": {
+			"type": "k",
+			"n_cells": "100",
+			"n_genes": "1000",
+			"batch": "sc_celseq"
+		},
+		"dropseq": {
+			"type": "k",
+			"n_cells": "100",
+			"n_genes": "1000",
+			"batch": "sc_dropseq"
 		}
 	},
-	"Kang18":{
-	    "1015":{
-	        "type": ["k"],
-	        "ncells": "200",
-	        "batch": "1015"
-	    }
+	"Kang18": {
+		"1015": {
+			"type": "k",
+			"n_cells": "100",
+			"n_genes": "1000",
+			"batch": "1015"
+		},
+		"B_cells": {
+			"type": "n",
+			"n_cells": null,
+			"n_genes": "1000",
+			"batch": "1015",
+			"cluster": "B cells"
+		},
+		"NK_cells": {
+			"type": "n",
+			"n_cells": null,
+			"n_genes": "1000",
+			"batch": "1015",
+			"cluster": "NK cells"
+		}
 	},
-	"Zheng17":{
-		"foo":{
-			"type": ["k"],
-			"ncells": "200"
+	"Tung17": {
+		"foo": {
+			"type": "b",
+			"n_cells": "100",
+			"n_genes": "1000"
+		},
+		"NA19098": {
+			"type": "n",
+			"n_cells": null,
+			"n_genes": "1000",
+			"batch": "NA19098"
+		}, 
+		"NA19101": {
+			"type": "n",
+			"n_cells": null,
+			"n_genes": "1000",
+			"batch": "NA19101"
+		}, 
+		"NA19239": {
+			"type": "n",
+			"n_cells": null,
+			"n_genes": "1000",
+			"batch": "NA19239"
 		}
 	}
 }
