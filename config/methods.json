@@ -5,7 +5,7 @@
 	"scDesign": ["n"],
 	"scDesign2": ["n", "k"],
 	"SERGIO": ["n"],
-	"SPARSim": ["n"],
+	"SPARSim": ["n", "b"],
 	"SPsimSeq": ["n", "b"],
 	"splatter": ["n"],
 	"SymSim": ["n"],
