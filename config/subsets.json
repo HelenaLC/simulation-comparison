@@ -1,40 +1,16 @@
 {
 	"CellBench": {
-		"H1975": {
-			"type": "b",
-			"n_cells": "200",
-			"n_genes": "2000",
-			"cluster": "H1975"
-		},
 		"H2228": {
 			"type": "b",
 			"n_cells": "200",
 			"n_genes": "2000",
 			"cluster": "H2228"
 		},
-		"HCC827": {
-			"type": "b",
-			"n_cells": "200",
-			"n_genes": "2000",
-			"cluster": "HCC827"
-		},
-		"10x": {
-			"type": "k",
-			"n_cells": "200",
-			"n_genes": "2000",
-			"batch": "sc_10x"
-		},
 		"celseq": {
 			"type": "k",
 			"n_cells": "200",
 			"n_genes": "2000",
 			"batch": "sc_celseq"
-		},
-		"dropseq": {
-			"type": "k",
-			"n_cells": "200",
-			"n_genes": "2000",
-			"batch": "sc_dropseq"
 		}
 	},
 	"Kang18": {
@@ -79,23 +55,11 @@
 			"n_cells": "200",
 			"n_genes": "2000"
 		},
-		"NA19098": {
-			"type": "n",
-			"n_cells": null,
-			"n_genes": "2000",
-			"batch": "NA19098"
-		}, 
 		"NA19101": {
 			"type": "n",
 			"n_cells": null,
 			"n_genes": "2000",
 			"batch": "NA19101"
-		}, 
-		"NA19239": {
-			"type": "n",
-			"n_cells": null,
-			"n_genes": "2000",
-			"batch": "NA19239"
 		}
 	},
 	"Zheng17": {
