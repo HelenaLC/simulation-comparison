@@ -9,6 +9,7 @@ suppressPackageStartupMessages({
     library(ggplot2)
     library(ggrastr)
     library(matrixStats)
+    library(muscat)
     library(patchwork)
     library(Peacock.test)
     #library(POWSC)
