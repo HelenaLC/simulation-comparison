@@ -6,9 +6,6 @@ suppressPackageStartupMessages({
 })
 
 fun <- function(x) {
-    
-    x <- readRDS("data/02-sub/Kang18,B_cells.rds")
-    
     y <- counts(x)
     if (!is.matrix(x))
         y <- as.matrix(y)
@@ -19,14 +16,22 @@ fun <- function(x) {
     i <- rowMeans(y == 0) != 0
     x <- x[i, ]; y <- y[i, ]
 
-    g <- factor(sample(2, ncol(x), TRUE))
+    i <- c("batch", "cluster")
+    i <- intersect(i, names(colData(x)))
+    if (length(i) != 0) {
+        g <- droplevels(factor(x[[i]]))
+        t <- switch(i, batch = "b", cluster = "k")
+    } else {
+        g <- factor(sample(2, ncol(x), TRUE))
+        t <- "n"
+    }
+    
     mm <- model.matrix(~g)
-
     p <- getDatasetZTNB(
         counts = y,
         design = mm)
 
-    x <- list(
+    l <- list(
         dataset = y,
         group = g,
         nTags = nrow(x),
@@ -34,4 +39,8 @@ fun <- function(x) {
         pUp = 0,
         verbose = FALSE,
         params = p)
+    
+    z <- list(
+        pars = l,
+        type = t)
 }

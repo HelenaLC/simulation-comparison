@@ -1,6 +1,7 @@
 suppressPackageStartupMessages({
     library(dplyr)
     library(ggplot2)
+    library(ggrastr)
     library(patchwork)
     library(RColorBrewer)
     library(tidyr)
@@ -26,7 +27,7 @@ suppressPackageStartupMessages({
 
 # themes ----
 
-.prettify <- function(plt, thm) 
+.prettify <- function(plt, thm = NULL, base_size = 6) 
 {
     col <- !is.null(plt$labels$colour) && !is.numeric(plt$data[[plt$labels$colour]])
     fill <- !is.null(plt$labels$fill) && !is.numeric(plt$data[[plt$labels$fill]])
@@ -44,7 +45,7 @@ suppressPackageStartupMessages({
         fill = guide_legend(override.aes = list(alpha = 1, size = 2)))
     }
     plt <- plt + 
-        theme_linedraw(6) + theme(
+        theme_linedraw(base_size) + theme(
             panel.grid = element_blank(),
             legend.key.size = unit(0.5, "lines"),
             strip.background = element_blank(),
@@ -58,7 +59,7 @@ suppressPackageStartupMessages({
 
 pat <- ".*-sim_data-(.*)\\.R"
 methods <- gsub(pat, "\\1", list.files("scripts", pat))
-.methods_pal <- colorRampPalette(brewer.pal(8, "Set3"))(length(methods))
+.methods_pal <- colorRampPalette(brewer.pal(8, "Set2"))(length(methods))
 .methods_pal <- c(ref = "black", setNames(.methods_pal, methods))
 
 pat <- ".*calc_qc-(.*)\\.R"
@@ -72,9 +73,11 @@ pat <- ".*calc_qc-(.*)\\.R"
     gene_cv  = "coefficient of variation",
     gene_frq = "gene detection frequency",
     gene_cor = "gene-to-gene correlation",
+    gene_pve = "percent variance explained",
     cell_lls = "log-library size",
     cell_frq = "cell detection frequency",
-    cell_cor = "cell-to-cell correlation")
+    cell_cor = "cell-to-cell correlation",
+    cell_sw = "silhouette width")
 
 n <- 5
 .metrics_pal <- c(

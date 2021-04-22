@@ -23,19 +23,20 @@ oy <- df %>%
     arrange(desc(stat)) %>% 
     pull("metric")
 
+df <- df %>% complete(metric, method, group, fill = list(stat = NA))
 facet <- if (!all(df$group == "global")) facet_grid(~ group)
 
 plt <- ggplot(df, 
     aes(method, metric, fill = stat)) +
     geom_tile(col = "white") + facet +
-    scale_fill_viridis_c(
+    scale_fill_gradientn(
         .stats1d_lab[wcs$stat1d],
-        limits = c(0, NA), 
-        na.value = "lightgrey") +
+        limits = c(0, 1), 
+        na.value = "lightgrey",
+        colors = rev(hcl.colors(9, "RdPu"))) +
     coord_equal(expand = FALSE) +
     scale_x_discrete(limits = rev(ox)) + 
-    scale_y_discrete(limits = rev(oy)) +
-    ggtitle(paste("reftyp:", wcs$reftyp))
+    scale_y_discrete(limits = rev(oy))
 
 thm <- theme(
     axis.ticks = element_blank(),
@@ -44,4 +45,5 @@ thm <- theme(
     axis.text.x = element_text(angle = 45, hjust = 1))
 
 p <- .prettify(plt, thm)
-ggsave(args$fig, p, width = 6, height = 6, units = "cm")
+saveRDS(p, args$ggp)
+ggsave(args$plt, p, width = 6, height = 6, units = "cm")

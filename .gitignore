@@ -5,6 +5,9 @@
 *.txt
 *.html
 
+shiny/*
+figures/*
+
 logs/*
 data/*
 plots/*

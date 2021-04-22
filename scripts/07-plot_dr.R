@@ -51,4 +51,5 @@ if (length(i) == 1) {
     h <- 4*length(i)
 }
 
-ggsave(args$fig, p, width = w, height = h, units = "cm")
+saveRDS(p, args$ggp)
+ggsave(args$plt, p, width = w, height = h, units = "cm")

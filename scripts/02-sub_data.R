@@ -28,14 +28,20 @@ if (!is.null(y$n_cells)) {
     by <- intersect(
         c("cluster", "sample", "batch"),
         names(colData(x)))
-    cs <- lapply(
-        split(seq(ncol(x)), colData(x)[by]),
-        function(.) {
-            n <- as.numeric(y$n_cells)
-            n <- min(n, length(.))
-            sample(., n)
-        })
-    x <- x[, unlist(cs)]
+    if (length(by) > 0) {
+        cs <- lapply(
+            split(seq(ncol(x)), colData(x)[by]),
+            function(.) {
+                n <- as.numeric(y$n_cells)
+                n <- min(n, length(.))
+                sample(., n)
+            })
+        x <- x[, unlist(cs)]
+    } else {
+        n <- as.numeric(y$n_cells)
+        n <- min(n, ncol(x))
+        x <- x[, sample(ncol(x), n)]
+    }
 }
 
 # keep genes with count > 1 in at least 10 cells

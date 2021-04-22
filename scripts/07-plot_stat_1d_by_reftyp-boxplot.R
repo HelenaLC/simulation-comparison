@@ -21,9 +21,11 @@ plt <- ggplot(df, aes_string(
     geom_boxplot(
         outlier.size = 0.25, outlier.alpha = 1,
         size = 0.25, alpha = 0.25, key_glyph = "point") + 
+    scale_y_continuous(
+        limits = switch(wcs$stat1d, 
+            ks = c(0, 1), ws = c(0, NA))) +
     scale_fill_manual(values = pal) +
-    scale_color_manual(values = .methods_pal) +
-    ggtitle(paste("reftyp:", wcs$reftyp))
+    scale_color_manual(values = .methods_pal)
 
 thm <- theme(
     axis.title = element_blank(),
@@ -31,4 +33,5 @@ thm <- theme(
     axis.ticks.x = element_blank())
 
 p <- .prettify(plt, thm)
-ggsave(args$fig, p, width = 15, height = 6, units = "cm")
+saveRDS(p, args$ggp)
+ggsave(args$plt, p, width = 15, height = 6, units = "cm")

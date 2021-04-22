@@ -1,15 +1,15 @@
 {
 	"BASiCS": ["b"],
-	"MFA": ["n"],
-	"scDD": ["n"],
+	"muscat": ["n", "b", "k"],
+	"powsimR": ["n"],
+	"scDD": ["n", "g"],
 	"scDesign": ["n"],
 	"scDesign2": ["n", "k"],
 	"SERGIO": ["n"],
 	"SPARSim": ["n"],
-	"SPsimSeq": ["n", "b"],
+	"SPsimSeq": ["n"],
 	"splatter": ["n"],
 	"SymSim": ["n"],
-	"powsimR": ["n"],
 	"ZINB-WaVE": ["n", "b", "k"],
-	"zingeR": ["n"]
+	"zingeR": ["n", "b", "k"]
 }

@@ -2,86 +2,119 @@
 	"CellBench": {
 		"H1975": {
 			"type": "b",
-			"n_cells": "100",
-			"n_genes": "1000",
+			"n_cells": "200",
+			"n_genes": "2000",
 			"cluster": "H1975"
 		},
 		"H2228": {
 			"type": "b",
-			"n_cells": "100",
-			"n_genes": "1000",
+			"n_cells": "200",
+			"n_genes": "2000",
 			"cluster": "H2228"
 		},
 		"HCC827": {
 			"type": "b",
-			"n_cells": "100",
-			"n_genes": "1000",
+			"n_cells": "200",
+			"n_genes": "2000",
 			"cluster": "HCC827"
 		},
 		"10x": {
 			"type": "k",
-			"n_cells": "100",
-			"n_genes": "1000",
+			"n_cells": "200",
+			"n_genes": "2000",
 			"batch": "sc_10x"
 		},
 		"celseq": {
 			"type": "k",
-			"n_cells": "100",
-			"n_genes": "1000",
+			"n_cells": "200",
+			"n_genes": "2000",
 			"batch": "sc_celseq"
 		},
 		"dropseq": {
 			"type": "k",
-			"n_cells": "100",
-			"n_genes": "1000",
+			"n_cells": "200",
+			"n_genes": "2000",
 			"batch": "sc_dropseq"
 		}
 	},
 	"Kang18": {
 		"1015": {
 			"type": "k",
-			"n_cells": "100",
-			"n_genes": "1000",
+			"n_cells": "200",
+			"n_genes": "2000",
 			"batch": "1015"
 		},
 		"B_cells": {
 			"type": "n",
 			"n_cells": null,
-			"n_genes": "1000",
+			"n_genes": "2000",
 			"batch": "1015",
 			"cluster": "B cells"
 		},
 		"NK_cells": {
 			"type": "n",
 			"n_cells": null,
-			"n_genes": "1000",
+			"n_genes": "2000",
 			"batch": "1015",
 			"cluster": "NK cells"
+		}
+	},
+	"Mereu20":{
+		"HEK": {
+			"type": "b",
+			"n_cells": "100",
+			"n_genes": "2000",
+			"cluster": "HEK cells"
+		},
+		"ddSeq": {
+			"type": "k",
+			"n_cells": "200",
+			"n_genes": "2000",
+			"batch": "ddSEQ"
 		}
 	},
 	"Tung17": {
 		"foo": {
 			"type": "b",
-			"n_cells": "100",
-			"n_genes": "1000"
+			"n_cells": "200",
+			"n_genes": "2000"
 		},
 		"NA19098": {
 			"type": "n",
 			"n_cells": null,
-			"n_genes": "1000",
+			"n_genes": "2000",
 			"batch": "NA19098"
 		}, 
 		"NA19101": {
 			"type": "n",
 			"n_cells": null,
-			"n_genes": "1000",
+			"n_genes": "2000",
 			"batch": "NA19101"
 		}, 
 		"NA19239": {
 			"type": "n",
 			"n_cells": null,
-			"n_genes": "1000",
+			"n_genes": "2000",
 			"batch": "NA19239"
+		}
+	},
+	"Zheng17": {
+		"foo": {
+			"type": "k",
+			"n_cells": "200",
+			"n_genes": "2000"
+		},
+		"HSCs": {
+			"type": "n",
+			"n_cells": null,
+			"n_genes": "2000",
+			"cluster": "HSCs CD34+"
+		},
+		"Monocytes": {
+			"type": "n",
+			"n_cells": "200",
+			"n_genes": "2000",
+			"cluster": "Monocytes CD14+"
 		}
 	}
 }

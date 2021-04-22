@@ -6,6 +6,8 @@ suppressPackageStartupMessages({
 fun <- function(x) {
     if (!is.matrix(y <- counts(x)))
         counts(x) <- as.matrix(y)
+    if (is.null(colnames(x)))
+        colnames(x) <- seq(ncol(x))
     if (is.null(x$batch)) {
         batch <- rep(1, ncol(x))
         batch.config <- 1
@@ -18,11 +20,19 @@ fun <- function(x) {
         batch <- as.numeric(x$batch)
         batch.config <- tabulate(x$batch)/ncol(x)
     }
-    y <- SPsimSeq(s.data = counts(x), 
-        n.genes = nrow(x), tot.samples = ncol(x),
-        batch = batch, batch.config = batch.config,
-        model.zero.prob = TRUE, verbose = FALSE)[[1]]
-    y$batch <- x$batch
-    y$Batch <- NULL
+    y <- SPsimSeq(
+        s.data = counts(x), 
+        n.genes = nrow(x), 
+        tot.samples = ncol(x),
+        batch = batch, 
+        batch.config = batch.config,
+        model.zero.prob = TRUE, 
+        genewiseCor = TRUE,
+        result.format = "SCE", 
+        return.details = FALSE,
+        verbose = FALSE)
+    y <- y[[1]]
+    rowData(y) <- NULL
+    colData(y) <- colData(x)
     return(y)
 }

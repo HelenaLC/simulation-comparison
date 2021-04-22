@@ -32,4 +32,5 @@ thm <- thm + theme(
     axis.ticks.x = element_blank())
 
 p <- .prettify(plt, thm)
-ggsave(args$fig, p, width = width, height = height, units = "cm")
+saveRDS(p, args$ggp)
+ggsave(args$plt, p, width = width, height = height, units = "cm")

@@ -29,7 +29,7 @@ METRICS = glob_wildcards("scripts/05-calc_qc-{x}.R").x
 GENE_METRICS = [m for m in METRICS if "gene_" in m]
 CELL_METRICS = [m for m in METRICS if "cell_" in m]
 
-ex = [m for m in METRICS if "_cor" in m]
+ex = ["gene_cor", "cell_cor", "gene_pve", "cell_sw"]
 METRIC_PAIRS = \
 	list(itertools.combinations([m for m in GENE_METRICS if m not in ex], 2)) + \
 	list(itertools.combinations([m for m in CELL_METRICS if m not in ex], 2))
@@ -57,6 +57,8 @@ rule all:
 # evaluation
 		expand("results/dr_ref-{refset}.rds", refset = REFSETS),
 		expand("results/dr_sim-{simset}.rds", simset = SIMSETS),
+		expand("results/stat_qc-{refset},{metric}.rds",
+			refset = REFSETS, metric = METRICS),
 		expand("results/stat_1d-{simset},{metric},{stat1d}.rds",
 			simset = SIMSETS, metric = METRICS, stat1d = STATS1D),
 		expand(expand("results/stat_2d-{{simset}},{metric1},{metric2},{{stat2d}}.rds",
@@ -65,16 +67,17 @@ rule all:
 			metric2 = [m[1] for m in METRIC_PAIRS]),
 			simset = SIMSETS, stat2d = STATS2D),
 # visualization
-		expand("plots/dr-{refset}.pdf", refset = REFSETS),
-		expand("plots/qc_1d-{refset}.pdf", refset = REFSETS),
-		expand("plots/stat_1d-{plt},{stat1d}.pdf", plt = STAT1D_PLTS, stat1d = STATS1D),
-		expand("plots/stat_1d_by_refset-{refset},{stat1d}.pdf", refset = REFSETS, stat1d = STATS1D),
-		expand("plots/stat_1d_by_reftyp-{plt},{reftyp},{stat1d}.pdf", 
-			plt = STAT1D_REFTYP_PLTS, reftyp = REFTYPS, stat1d = STATS1D),
-		expand("plots/stat_1d_by_method-{plt},{method},{stat1d}.pdf", 
-			plt = STAT1D_METHOD_PLTS, method = METHODS, stat1d = STATS1D),
-		expand("plots/stat_2d_by_refset-{refset},{stat2d}.pdf", refset = REFSETS, stat2d = STATS2D),
-		expand("plots/stat_2d_by_reftyp-{reftyp},{stat2d}.pdf", reftyp = REFTYPS, stat2d = STATS2D)
+		expand("plots/dr-{refset}.{ext}", refset = REFSETS, ext = ["pdf", "rds"]),
+		expand("plots/qc_1d-{refset}.{ext}", refset = REFSETS, ext = ["pdf", "rds"]),
+		expand("plots/qc_2d-{refset}.pdf", refset = REFSETS),
+		expand("plots/stat_1d-{plt},{stat1d}.{ext}", plt = STAT1D_PLTS, stat1d = STATS1D, ext = ["pdf", "rds"]),
+		expand("plots/stat_1d_by_refset-{refset},{stat1d}.{ext}", refset = REFSETS, stat1d = STATS1D, ext = ["pdf", "rds"]),
+		expand("plots/stat_1d_by_reftyp-{plt},{reftyp},{stat1d}.{ext}", 
+			plt = STAT1D_REFTYP_PLTS, reftyp = REFTYPS, stat1d = STATS1D, ext = ["pdf", "rds"]),
+		expand("plots/stat_1d_by_method-{plt},{method},{stat1d}.{ext}", 
+			plt = STAT1D_METHOD_PLTS, method = METHODS, stat1d = STATS1D, ext = ["pdf", "rds"]),
+		expand("plots/stat_2d_by_refset-{refset},{stat2d}.{ext}", refset = REFSETS, stat2d = STATS2D, ext = ["pdf", "rds"]),
+		expand("plots/stat_2d_by_reftyp-{reftyp},{stat2d}.{ext}", reftyp = REFTYPS, stat2d = STATS2D, ext = ["pdf", "rds"])
 
 # PREPROCESSING ================================================================
 
@@ -181,8 +184,18 @@ rule dr_sim:
 
 # EVALUATION ===================================================================
 
-rule eval_1d:
+rule eval_qc:
 	priority: 91
+	input:	"scripts/06-eval_qc.R",
+			rules.qc_ref.output
+	output:	"results/stat_qc-{datset},{subset},{metric}.rds"
+	log:	"logs/eval_qc-{datset},{subset},{metric}.Rout"
+	shell:	'''
+	{R} CMD BATCH --no-restore --no-save "--args 
+	wcs={wildcards} dat={input[1]} res={output}" {input[0]} {log}'''
+
+rule eval_1d:
+	priority: 90
 	input:	"scripts/06-eval_1d.R",
 			"scripts/06-stat_1d-{stat1d}.R",
 			rules.qc_ref.output,
@@ -195,7 +208,7 @@ rule eval_1d:
 	sim={input[3]} res={output}" {input[0]} {log}'''
 
 rule eval_2d:
-	priority: 91
+	priority: 90
 	input:	"scripts/06-eval_2d.R",
 			"scripts/06-stat_2d-{stat2d}.R",
 			x_ref = "results/qc_ref-{datset},{subset},{metric1}.rds",
@@ -258,52 +271,68 @@ def stat2d_by_reftyp(wildcards):
 # VISUALIZATION ================================================================
 
 rule plot_dr:
-	priority: 90
+	priority: 89
 	input:	"scripts/07-plot_dr.R",
 			"scripts/utils-plotting.R",
 			res = dr_by_refset
 	params:	lambda wc, input: ";".join(input.res)
-	output:	"plots/dr-{refset}.pdf"
+	output:	"plots/dr-{refset}.pdf",
+			"plots/dr-{refset}.rds"
 	log:	"logs/plot_dr-{refset}.Rout"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	fun={input[1]} res={params} fig={output}" {input[0]} {log}'''
+	fun={input[1]} res={params} plt={output[0]} ggp={output[1]}" {input[0]} {log}'''
 
 rule plot_qc_1d:
-	priority: 90
+	priority: 89
 	input:	"scripts/07-plot_qc_1d.R",
 			"scripts/utils-plotting.R",
 			res = qc_by_refset
 	params:	lambda wc, input: ";".join(input.res)
-	output:	"plots/qc_1d-{refset}.pdf"
+	output:	"plots/qc_1d-{refset}.pdf",
+			"plots/qc_1d-{refset}.rds"
 	log:	"logs/plot_qc_1d-{refset}.Rout"
+	shell:	'''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+	fun={input[1]} res={params} plt={output[0]} ggp={output[1]}" {input[0]} {log}'''
+
+rule plot_qc_2d:
+	priority: 89
+	input:	"scripts/07-plot_qc_2d.R",
+			"scripts/utils-plotting.R",
+			res = qc_by_refset
+	params:	lambda wc, input: ";".join(input.res)
+	output:	"plots/qc_2d-{refset}.pdf"
+	log:	"logs/plot_qc_2d-{refset}.Rout"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	fun={input[1]} res={params} fig={output}" {input[0]} {log}'''
 
 rule plot_stat_1d:
-	priority: 90
+	priority: 89
 	input:	"scripts/07-plot_stat_1d-{plt}.R",
 			"scripts/utils-plotting.R",
 			res = stat1d
 	params:	lambda wc, input: ";".join(input.res)
-	output:	"plots/stat_1d-{plt},{stat1d}.pdf"
+	output:	"plots/stat_1d-{plt},{stat1d}.pdf",
+			"plots/stat_1d-{plt},{stat1d}.rds"
 	log:	"logs/plot_stat_1d-{plt},{stat1d}.Rout"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	fun={input[1]} res={params} fig={output}" {input[0]} {log}'''
+	fun={input[1]} res={params} plt={output[0]} ggp={output[1]}" {input[0]} {log}'''
 
 rule plot_stat_1d_by_refset:
-	priority: 90
+	priority: 89
 	input:	"scripts/07-plot_stat_1d_by_refset.R",
 			"scripts/utils-plotting.R",
 			res = stat1d_by_refset
 	params:	lambda wc, input: ";".join(input.res)
-	output:	"plots/stat_1d_by_refset-{refset},{stat1d}.pdf"
+	output:	"plots/stat_1d_by_refset-{refset},{stat1d}.pdf",
+			"plots/stat_1d_by_refset-{refset},{stat1d}.rds"
 	log:	"logs/plot_stat_1d_by_refset-{refset},{stat1d}.Rout"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	fun={input[1]} res={params} fig={output}" {input[0]} {log}'''
+	fun={input[1]} res={params} plt={output[0]} ggp={output[1]}" {input[0]} {log}'''
 
 rule plot_stat_1d_by_reftyp:
 	priority: 89
@@ -311,11 +340,12 @@ rule plot_stat_1d_by_reftyp:
 			"scripts/utils-plotting.R",
 			res = stat1d_by_reftyp
 	params:	lambda wc, input: ";".join(input.res)
-	output:	"plots/stat_1d_by_reftyp-{plt},{reftyp},{stat1d}.pdf"
+	output:	"plots/stat_1d_by_reftyp-{plt},{reftyp},{stat1d}.pdf",
+			"plots/stat_1d_by_reftyp-{plt},{reftyp},{stat1d}.rds"
 	log:	"logs/plot_stat_1d_by_reftyp-{plt},{reftyp},{stat1d}.Rout"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	fun={input[1]} res={params} fig={output}" {input[0]} {log}'''
+	fun={input[1]} res={params} plt={output[0]} ggp={output[1]}" {input[0]} {log}'''
 
 rule plot_stat_1d_by_method:
 	priority: 89
@@ -323,35 +353,38 @@ rule plot_stat_1d_by_method:
 			"scripts/utils-plotting.R",
 			res = stat1d_by_method
 	params:	lambda wc, input: ";".join(input.res)
-	output:	"plots/stat_1d_by_method-{plt},{method},{stat1d}.pdf"
+	output:	"plots/stat_1d_by_method-{plt},{method},{stat1d}.pdf",
+			"plots/stat_1d_by_method-{plt},{method},{stat1d}.rds"
 	log:	"logs/plot_stat_1d_by_method-{plt},{method},{stat1d}.Rout"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	fun={input[1]} res={params} fig={output}" {input[0]} {log}'''
+	fun={input[1]} res={params} plt={output[0]} ggp={output[1]}" {input[0]} {log}'''
 
 rule plot_stat_2d_by_refset:
-	priority: 90
+	priority: 89
 	input:	"scripts/07-plot_stat_2d_by_refset.R",
 			"scripts/utils-plotting.R",
 			res = stat2d_by_refset
 	params:	lambda wc, input: ";".join(input.res)
-	output:	"plots/stat_2d_by_refset-{refset},{stat2d}.pdf"
+	output:	"plots/stat_2d_by_refset-{refset},{stat2d}.pdf",
+			"plots/stat_2d_by_refset-{refset},{stat2d}.rds"
 	log:	"logs/plot_stat_2d_by_refset-{refset},{stat2d}.Rout"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	fun={input[1]} res={params} fig={output}" {input[0]} {log}'''
+	fun={input[1]} res={params} plt={output[0]} ggp={output[1]}" {input[0]} {log}'''
 
 rule plot_stat_2d_by_reftyp:
-	priority: 90
+	priority: 89
 	input:	"scripts/07-plot_stat_2d_by_reftyp.R",
 			"scripts/utils-plotting.R",
 			res = stat2d_by_reftyp
 	params:	lambda wc, input: ";".join(input.res)
-	output:	"plots/stat_2d_by_reftyp-{reftyp},{stat2d}.pdf"
+	output:	"plots/stat_2d_by_reftyp-{reftyp},{stat2d}.pdf",
+			"plots/stat_2d_by_reftyp-{reftyp},{stat2d}.rds"
 	log:	"logs/plot_stat_2d_by_reftyp-{reftyp},{stat2d}.Rout"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	fun={input[1]} res={params} fig={output}" {input[0]} {log}'''
+	fun={input[1]} res={params} plt={output[0]} ggp={output[1]}" {input[0]} {log}'''
 
 # ==============================================================================
 

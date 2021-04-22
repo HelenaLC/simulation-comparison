@@ -23,4 +23,5 @@ thm <- theme(
     axis.text.x = element_text(angle = 45, hjust = 1))
 
 p <- .prettify(plt, thm)
-ggsave(args$fig, p, width = 6, height = 4, units = "cm")
+saveRDS(p, args$ggp)
+ggsave(args$plt, p, width = 6, height = 4, units = "cm")

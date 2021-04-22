@@ -8,6 +8,7 @@ plt <- ggplot(df,
     geom_boxplot(
         size = 0.25, outlier.size = 0.25,
         alpha = 0.25, key_glyph = "point") +
+    scale_y_continuous(limits = c(0, 1)) +
     scale_fill_manual(values = .metrics_pal) +
     scale_colour_manual(values = .metrics_pal) +
     labs(x = NULL, y = .stats1d_lab[wcs$stat1d]) +
@@ -20,4 +21,5 @@ thm <- theme(
 
 p <- .prettify(plt, thm)
 n <- length(unique(df$group))
-ggsave(args$fig, p, width = 4+3*n, height = 6, units = "cm")
+saveRDS(p, args$ggp)
+ggsave(args$plt, p, width = 4+3*n, height = 6, units = "cm")

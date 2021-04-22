@@ -7,6 +7,7 @@ suppressPackageStartupMessages({
     library(dyngen)
     library(jsonlite)
     library(ggplot2)
+    library(ggrastr)
     library(matrixStats)
     library(patchwork)
     library(Peacock.test)
@@ -35,7 +36,7 @@ writeLines(capture.output(sessionInfo()), args[[1]])
 #     "emdist", "JINJINT/ESCO", "ExperimentHub",
 #     "dplyr", "csoneson/dreval",
 #     "jsonlite",
-#     "ggplot2",
+#     "ggplot2", "VPetukhov/ggrastr",
 #     "matrixStats",
 #     "patchwork", "Peacock.test", "suke18/POWSC", "purrr", "bvieth/powsimR",
 #     "Vivianstats/scDesign", "JSB-UCLA/scDesign2", 

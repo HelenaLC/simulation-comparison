@@ -7,6 +7,10 @@ suppressPackageStartupMessages({
 })
 
 fun <- function(x) {
-    y <- do.call(NBsimSingleCell, x)
-    SingleCellExperiment(list(counts = y$counts))
+    y <- do.call(NBsimSingleCell, x$pars)
+    cd <- switch(x$type,
+        b = DataFrame(batch = y$group),
+        k = DataFrame(cluster = y$group),
+        n = make_zero_col_DFrame(ncol(y)))
+    SingleCellExperiment(list(counts = y$counts), colData = cd)
 }

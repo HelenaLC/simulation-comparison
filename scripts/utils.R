@@ -56,21 +56,21 @@
     }
     # split cells into groups
     idx <- .split_cells(sce, groups)
-    # downsample to at most 'g' genes
+    # downsample to at most 'n_genes' in total
     if (!is.null(n_genes)) {
         n_genes <- min(n_genes, nrow(sce))
         gs <- sample(nrow(sce), n_genes)
         sce <- sce[gs, ]
     }
-    # downsample to at most 'c' cells per group
+    # downsample to at most 'n_cells' per group
     if (!is.null(n_cells)) {
         idx <- map_depth(idx, -1, ~{
             n_cells <- min(n_cells, length(.x))
-            sample(length(.x), n_cells)
+            sample(.x, n_cells)
         })
     }
     # compute QC metric per group
-    res <- map_depth(idx, 2, ~{
+    res <- map_depth(idx, -1, ~{
         data.frame(
             row.names = NULL, 
             value = fun(sce[, .x]))

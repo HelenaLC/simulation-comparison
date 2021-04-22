@@ -20,4 +20,4 @@ qcFUN <- function(sce) {
 
 groups <- NULL
 n_genes <- NULL
-n_cells <- 100
+n_cells <- 200
