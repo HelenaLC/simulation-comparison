@@ -8,7 +8,7 @@ fun <- function(x) {
         foo <- capture.output({
             x$BatchInfo <- as.numeric(x$batch)
             mcmc <- BASiCS_MCMC(Data = x,
-                N = 500, Thin = 10, Burn = 10,
+                N=20000, Thin=20, Burn=10000, #NOTE: WE USE A SMALL NUMBER OF ITERATIONS FOR ILLUSTRATION PURPOSES ONLY. LARGER NUMBER OF ITERATIONS ARE USUALLY REQUIRED TO ACHIEVE CONVERGENCE. OUR RECOMMENDED SETTING IS N=20000, Thin=20 and Burn=10000
                 Regression = TRUE, WithSpikes = FALSE)
         })
     })

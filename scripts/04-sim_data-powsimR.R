@@ -4,9 +4,13 @@ suppressPackageStartupMessages({
 })
 
 fun <- function(param){
-  setup<- Setup(estParamRes = param, nsims = 1,
-             p.DE = 0.1, pLFC = 1, p.G = 1, n1=c(20,50,100), n2=c(30,60,120), # per default,check n1,n2!
-             setup.seed = 1234)
+  setup <- Setup(ngenes = param$totalG, 
+                estParamRes = param, 
+                nsims = 1,
+                p.DE = 0.1, pLFC = 1, p.G = 1, # default
+                n1=c(param$totalS), 
+                n2=c(2), # has to be at least 2 otherwise it does not work, 
+                setup.seed = 1234)
   
   sim <- simulateDE(SetupRes=setup,
                     Normalisation = "scran",
@@ -14,8 +18,10 @@ fun <- function(param){
                     Counts = TRUE,
                     NCores = NULL,
                     verbose = TRUE)
-  sim <- sim$Counts[[1]] # gives a list (lengt(n1)=3) of counts
-  sim <- SingleCellExperiment(list(counts=as.data.frame(sim)))
+  
+  sim <- as.data.frame(sim$Counts[[1]])
+  sim <- sim[,c(-1,-2)] # removing the two entries of group n2
+  sim <- SingleCellExperiment(list(counts=sim))
   return(sim)
 }
 
