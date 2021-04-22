@@ -20,14 +20,14 @@
 			"n_genes": "2000",
 			"batch": "1015"
 		},
-		"B_cells": {
+		"B": {
 			"type": "n",
 			"n_cells": null,
 			"n_genes": "2000",
 			"batch": "1015",
 			"cluster": "B cells"
 		},
-		"NK_cells": {
+		"NK": {
 			"type": "n",
 			"n_cells": null,
 			"n_genes": "2000",
