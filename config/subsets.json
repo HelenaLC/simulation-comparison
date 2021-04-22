@@ -36,11 +36,11 @@
 		}
 	},
 	"Mereu20":{
-		"HEK": {
+		"CD4T": {
 			"type": "b",
 			"n_cells": "100",
 			"n_genes": "2000",
-			"cluster": "HEK cells"
+			"cluster": "CD4 T cells"
 		},
 		"ddSeq": {
 			"type": "k",
