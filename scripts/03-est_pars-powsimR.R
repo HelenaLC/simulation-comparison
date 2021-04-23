@@ -13,6 +13,7 @@ fun <- function(x) {
     Protocol = "UMI",
     Distribution = "NB",
     Normalisation = "scran",
-    NCores = 1,
+    GeneFilter = 0.1,
+    SampleFilter = 3,
     verbose = FALSE)
 }

@@ -5,32 +5,37 @@ i <- c("lls", "cluster", "batch")
 i <- intersect(i, names(df))
 
 ps <- lapply(i, function(.) {
-    ggplot(df, aes(TSNE1, TSNE2, col = .data[[.]])) +
+    plt <- ggplot(df, aes(TSNE1, TSNE2, 
+        col = .data[[.]], fill = .data[[.]])) +
         (if (length(i) == 1) {
             facet_wrap(~ method, nrow = 2) 
         } else {
             facet_grid(~ method)
         }) +
-        geom_point(size = 0.25, alpha = 0.25) +
-        theme_linedraw(6) + theme(
-            aspect.ratio = 1,
-            panel.grid = element_blank(),
-            axis.text = element_blank(),
-            axis.ticks = element_blank(),
-            axis.title = element_text(hjust = 0),
-            legend.key.size = unit(0.5, "lines"),
-            panel.border = element_rect(fill = NA),
-            strip.text = element_text(color = "black"),
-            strip.background = element_rect(fill = NA),
-            legend.position = c(1, 0.5),
-            legend.justification = c(0, 0.5),
-            legend.margin = margin(l = 0.25, unit = "cm"),
-            panel.spacing = unit(0.25, "cm")) +
+        geom_point_rast(size = 0.2, alpha = 0.2, shape = 21)
         if (is.numeric(df[[.]])) {
-            scale_color_viridis_c() 
-        } else list(
-            scale_color_brewer(palette = "Set1"),
-            guides(col = guide_legend(override.aes = list(alpha = 1, size = 2))))
+            pal <- rev(hcl.colors(10, "RdPu"))
+            plt <- plt + 
+                scale_fill_gradientn(colors = pal) +
+                scale_color_gradientn(colors = pal) 
+        } else {
+            n <- length(unique(df[[.]]))
+            pal <- if (n <= 9) {
+                brewer.pal(n, "Set2")
+            } else {
+                colorRampPalette(brewer.pal(9, "Set1"))(n)
+            }
+            plt <- plt + 
+                scale_fill_manual(NULL, values = pal) +
+                scale_color_manual(NULL, values = pal)
+        }
+    thm <- theme(
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.spacing = unit(2, "mm"),
+        axis.title = element_text(hjust = 0),
+        legend.justification = c(0, 0.5))
+    .prettify(plt, thm)
 })
 
 if (length(ps) > 1) {
@@ -41,7 +46,7 @@ if (length(ps) > 1) {
         axis.title = element_blank()))
 }
 
-p <- wrap_plots(ps, ncol = 1)
+(p <- wrap_plots(ps, ncol = 1))
 
 if (length(i) == 1) {
     w <- 2*nlevels(df$method)+2

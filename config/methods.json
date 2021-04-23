@@ -1,11 +1,10 @@
 {
 	"BASiCS": ["b"],
 	"muscat": ["n", "b", "k"],
-	"powsimR": ["n"],
+	"powsimR": ["x"],
 	"scDD": ["n", "g"],
 	"scDesign": ["n"],
 	"scDesign2": ["n", "k"],
-	"SERGIO": ["n"],
 	"SPARSim": ["n", "b"],
 	"SPsimSeq": ["n", "b"],
 	"splatter": ["n"],
