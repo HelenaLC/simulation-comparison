@@ -1,8 +1,8 @@
 {
 	"BASiCS": ["b"],
-	"muscat": ["n", "b", "k"],
+	"muscat": ["n", "k"],
 	"powsimR": ["n"],
-	"scDD": ["n", "g"],
+	"scDD": ["n"],
 	"scDesign": ["n"],
 	"scDesign2": ["n", "k"],
 	"SERGIO": ["n"],
