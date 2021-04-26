@@ -2,7 +2,7 @@
 	"BASiCS": ["b"],
 	"muscat": ["n", "k"],
 	"powsimR": ["n", "g"],
-	"scDD": ["n"],
+	"scDD": ["n", "g"],
 	"scDesign": ["n"],
 	"scDesign2": ["n", "k"],
 	"SPARSim": ["n", "b"],
