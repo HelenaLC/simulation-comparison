@@ -81,3 +81,13 @@
     if (nrow(res) != 0) return(res)
 }
 
+# group can be either "cluster" or "batch"
+.find_markers <- function(sce, group){
+    library(scran)
+    out <- findMarkers(counts(sce), groups =colData(sce)[[group]] )[[1]]
+    sig <- out$FDR < 0.05
+    pDE <- sum(sig)/nrow(out)
+    mean_lFC <- mean(abs(out$summary.logFC[sig]))
+    
+    list(pDE = pDE, mean_logFC = mean_lFC)
+}

@@ -47,6 +47,20 @@
 			"n_cells": "200",
 			"n_genes": "2000",
 			"batch": "ddSEQ"
+		},
+		"ddSeq_CD4T_HEK":{
+		  "type": "g",
+			"n_cells": "200",
+			"n_genes": "2000",
+			"batch": "ddSEQ",
+			"cluster": ["CD4 T cells", "HEK cells"]
+		},
+		"CD4T_ddSEQ_MARS":{
+		  "type": "g",
+			"n_cells": "200",
+			"n_genes": "2000",
+			"batch": ["ddSEQ", "MARS-Seq"],
+			"cluster": "CD4 T cells"
 		}
 	},
 	"Tung17": {
