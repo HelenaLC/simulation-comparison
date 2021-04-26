@@ -37,7 +37,6 @@ METRIC_PAIRS = \
 STATS1D = glob_wildcards("scripts/06-stat_1d-{x}.R").x
 STATS2D = glob_wildcards("scripts/06-stat_2d-{x}.R").x
 
-STAT1D_PLTS = glob_wildcards("scripts/07-plot_stat_1d-{x}.R").x
 STAT1D_REFTYP_PLTS = glob_wildcards("scripts/07-plot_stat_1d_by_reftyp-{x}.R").x
 STAT1D_METHOD_PLTS = glob_wildcards("scripts/07-plot_stat_1d_by_method-{x}.R").x
 
@@ -70,7 +69,7 @@ rule all:
 		expand("plots/dr-{refset}.{ext}", refset = REFSETS, ext = ["pdf", "rds"]),
 		expand("plots/qc_1d-{refset}.{ext}", refset = REFSETS, ext = ["pdf", "rds"]),
 		expand("plots/qc_2d-{refset}.pdf", refset = REFSETS),
-		expand("plots/stat_1d-{plt},{stat1d}.{ext}", plt = STAT1D_PLTS, stat1d = STATS1D, ext = ["pdf", "rds"]),
+		expand("plots/stat_{dim}-correlation.{ext}", dim = ["1d", "2d"], ext = ["pdf", "rds"]),
 		expand("plots/stat_1d_by_refset-{refset},{stat1d}.{ext}", refset = REFSETS, stat1d = STATS1D, ext = ["pdf", "rds"]),
 		expand("plots/stat_1d_by_reftyp-{plt},{reftyp},{stat1d}.{ext}", 
 			plt = STAT1D_REFTYP_PLTS, reftyp = REFTYPS, stat1d = STATS1D, ext = ["pdf", "rds"]),
@@ -321,6 +320,19 @@ rule plot_stat_1d:
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	fun={input[1]} res={params} plt={output[0]} ggp={output[1]}" {input[0]} {log}'''
 
+rule plot_stat_1d_by_method:
+	priority: 89
+	input:	"scripts/07-plot_stat_1d_by_method-{plt}.R",
+			"scripts/utils-plotting.R",
+			res = stat1d
+	params:	lambda wc, input: ";".join(input.res)
+	output:	"plots/stat_1d_by_method-{plt},{stat1d}.pdf",
+			"plots/stat_1d_by_method-{plt},{stat1d}.rds"
+	log:	"logs/plot_stat_1d_by_method-{plt},{stat1d}.Rout"
+	shell:	'''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+	fun={input[1]} res={params} plt={output[0]} ggp={output[1]}" {input[0]} {log}'''
+
 rule plot_stat_1d_by_refset:
 	priority: 89
 	input:	"scripts/07-plot_stat_1d_by_refset.R",
@@ -343,19 +355,6 @@ rule plot_stat_1d_by_reftyp:
 	output:	"plots/stat_1d_by_reftyp-{plt},{reftyp},{stat1d}.pdf",
 			"plots/stat_1d_by_reftyp-{plt},{reftyp},{stat1d}.rds"
 	log:	"logs/plot_stat_1d_by_reftyp-{plt},{reftyp},{stat1d}.Rout"
-	shell:	'''
-	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	fun={input[1]} res={params} plt={output[0]} ggp={output[1]}" {input[0]} {log}'''
-
-rule plot_stat_1d_by_method:
-	priority: 89
-	input:	"scripts/07-plot_stat_1d_by_method-{plt}.R",
-			"scripts/utils-plotting.R",
-			res = stat1d_by_method
-	params:	lambda wc, input: ";".join(input.res)
-	output:	"plots/stat_1d_by_method-{plt},{method},{stat1d}.pdf",
-			"plots/stat_1d_by_method-{plt},{method},{stat1d}.rds"
-	log:	"logs/plot_stat_1d_by_method-{plt},{method},{stat1d}.Rout"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	fun={input[1]} res={params} plt={output[0]} ggp={output[1]}" {input[0]} {log}'''
@@ -384,6 +383,39 @@ rule plot_stat_2d_by_reftyp:
 	log:	"logs/plot_stat_2d_by_reftyp-{reftyp},{stat2d}.Rout"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+	fun={input[1]} res={params} plt={output[0]} ggp={output[1]}" {input[0]} {log}'''
+
+rule plot_stat_1d_correlation:
+	priority: 89
+	input:	"scripts/07-plot_stat_1d-correlation.R",
+			"scripts/utils-plotting.R",
+			res = expand(
+				"results/stat_1d-{simset},{metric},{stat1d}.rds", 
+				simset = SIMSETS, metric = METRICS, stat1d = STATS1D)
+	params:	lambda wc, input: ";".join(input.res)
+	output:	plt = "plots/stat_1d-correlation.pdf",
+			ggp = "plots/stat_1d-correlation.rds",
+	log:	"logs/plot_stat_1d_correlation.Rout"
+	shell:	'''
+	{R} CMD BATCH --no-restore --no-save "--args\
+	fun={input[1]} res={params} plt={output[0]} ggp={output[1]}" {input[0]} {log}'''
+
+rule plot_stat_2d_correlation:
+	priority: 89
+	input:	"scripts/07-plot_stat_2d-correlation.R",
+			"scripts/utils-plotting.R",
+			res = expand(expand(
+				"results/stat_2d-{{simset}},{metric1},{metric2},{{stat2d}}.rds", 
+				zip,
+				metric1 = [m[0] for m in METRIC_PAIRS], 
+				metric2 = [m[1] for m in METRIC_PAIRS]), 
+				simset = SIMSETS, stat2d = STATS2D)
+	params:	lambda wc, input: ";".join(input.res)
+	output:	plt = "plots/stat_2d-correlation.pdf",
+			ggp = "plots/stat_2d-correlation.rds",
+	log:	"logs/plot_stat_2d_correlation.Rout"
+	shell:	'''
+	{R} CMD BATCH --no-restore --no-save "--args\
 	fun={input[1]} res={params} plt={output[0]} ggp={output[1]}" {input[0]} {log}'''
 
 # ==============================================================================

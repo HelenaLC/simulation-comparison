@@ -16,10 +16,13 @@ x <- as.SingleCellExperiment(panc8)
 # (these are identical to counts)
 assay(x, "logcounts") <- NULL
 
-# for each batch, keep largest replicate
-ns <- table(x$tech, x$replicate)
-x <- x[, x$replicate %in% apply(ns, 1, 
-    function(.) colnames(ns)[which.max(.)])]
+# keep 1st inDrop dataset
+x <- x[, x$tech != "indrop" 
+    | x$tech == "indrop" 
+    & x$replicate == "human1"]
+
+# drop spike-ins
+x <- x[-grep("ERCC", rownames(x)), ]
 
 # drop undetected genes
 x <- x[rowSums(assay(x)) > 0, ]
@@ -35,5 +38,4 @@ dimnames(x) <- list(
     paste0("cell", seq_len(ncol(x))))
 
 # save SCE to .rds
-print(dim(x))
 saveRDS(x, args[[1]])
