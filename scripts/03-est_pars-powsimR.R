@@ -7,7 +7,7 @@ fun <- function(x) {
   y <- counts(x) 
   if (!is.matrix(y))
     y <- as.matrix(y)
-  
+
   if(ncol(colData(x)) == 0){
     # type n
     e <- estimateParam(
@@ -16,6 +16,8 @@ fun <- function(x) {
       Protocol = "UMI",
       Distribution = "NB",
       Normalisation = "scran",
+      GeneFilter = 0.05, # default
+      SampleFilter = 3,
       NCores = 1,
       verbose = FALSE)
     list(param = e)
@@ -30,12 +32,12 @@ fun <- function(x) {
       Protocol = "UMI",
       Distribution = "NB",
       Normalisation = "scran",
+      GeneFilter = 0.05,# default
+      SampleFilter = 3,
       NCores = 1,
       verbose = FALSE)
     f <- .find_markers(x, group = type)
     df <- colData(x)
     list(param = e, type = type, estimate = f, n1 = table(colData(x)[[type]])[[1]], n2 =table(colData(x)[[type]])[[2]], colData = df)
   }
-  
-  
 }

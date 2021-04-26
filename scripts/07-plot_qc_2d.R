@@ -27,16 +27,17 @@ gg <- lapply(pairs, function(i) {
 ps <- lapply(seq_along(gg), function(i) {
   lab <- paste(pairs[[i]], collapse = ", ")
   if (i == 1) lab <- paste(lab, "(x, y)")
-  plt <- ggplot(slice_sample(gg[[i]], n = 1e4),
+  plt <- ggplot(gg[[i]],
     aes(x, y, col = method, fill = method)) +
     facet_wrap(~ method, nrow = ifelse(nlevels(df$method) > 8, 2, 1)) +
-    geom_point_rast(size = 0.1, alpha = 0.1, shape = 16) +
+    geom_point_rast(size = 0.2, alpha = 0.1, shape = 16) +
     geom_smooth(size = 0.3, show.legend = FALSE,
       method = "loess", formula = y ~ x, span = 0.25, se = FALSE) +
     scale_fill_manual(values = .methods_pal) +
     scale_color_manual(values = .methods_pal) +
     ggtitle(lab)
-  .prettify(plt)
+  thm <- theme(axis.text.x = element_text(angle = 90, hjust = 1))
+  .prettify(plt, thm)
 })
 
 fig <- wrap_plots(ps, ncol = 1) +
