@@ -2,7 +2,7 @@ suppressPackageStartupMessages({
   library(SymSim)
   library(SingleCellExperiment)
 })
-
+#type (k)?
 fun <- function(x) {
     y <- counts(x)
     if (!is.matrix(y))

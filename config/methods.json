@@ -3,12 +3,12 @@
 	"muscat": ["n", "k"],
 	"powsimR": ["n", "g"],
 	"scDD": ["n", "g"],
-	"scDesign": ["n"],
+	"scDesign": ["n", "k"],
 	"scDesign2": ["n", "k"],
 	"SPARSim": ["n", "b"],
 	"SPsimSeq": ["n", "b"],
 	"splatter": ["n"],
-	"SymSim": ["n"],
+	"SymSim": ["n", "b"],
 	"ZINB-WaVE": ["n", "b", "k"],
 	"zingeR": ["n", "b", "k"]
 }
