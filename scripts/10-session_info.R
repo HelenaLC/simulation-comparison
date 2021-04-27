@@ -16,6 +16,7 @@ suppressPackageStartupMessages({
     library(powsimR)
     library(purrr)
     library(scater)
+    library(scDD)
     library(scDesign)
     library(scDesign2)
     library(scran)
@@ -35,7 +36,7 @@ writeLines(capture.output(sessionInfo()), args[[1]])
 #     "BASiCS",
 #     "CellBench",
 #     "emdist", "JINJINT/ESCO", "ExperimentHub",
-#     "dplyr", "csoneson/dreval",
+#     "dplyr", "csoneson/dreval","scDD",
 #     "jsonlite",
 #     "ggplot2", "VPetukhov/ggrastr",
 #     "matrixStats",
