@@ -24,6 +24,10 @@ SIMSETS = ["{},{}".format(r,m) \
 	for r in REFSETS.keys() \
 	for m in METHODS.keys() \
 	if REFSETS[r] in METHODS[m]]
+SIMSETS = {s: REFSETS.get(r) \
+	for s in SIMSETS \
+	for r in REFSETS \
+	if r in s}
 
 METRICS = glob_wildcards("scripts/05-calc_qc-{x}.R").x
 GENE_METRICS = [m for m in METRICS if "gene_" in m]
@@ -37,6 +41,9 @@ METRIC_PAIRS = \
 STATS1D = glob_wildcards("scripts/06-stat_1d-{x}.R").x
 STATS2D = glob_wildcards("scripts/06-stat_2d-{x}.R").x
 
+QC1D_PLTS = glob_wildcards("scripts/07-plot_qc_1d-{x}.R").x
+
+STAT1D_REFSET_PLTS = glob_wildcards("scripts/07-plot_stat_1d_by_refset-{x}.R").x
 STAT1D_REFTYP_PLTS = glob_wildcards("scripts/07-plot_stat_1d_by_reftyp-{x}.R").x
 STAT1D_METHOD_PLTS = glob_wildcards("scripts/07-plot_stat_1d_by_method-{x}.R").x
 
@@ -67,16 +74,20 @@ rule all:
 			simset = SIMSETS, stat2d = STATS2D),
 # visualization
 		expand("plots/dr-{refset}.{ext}", refset = REFSETS, ext = ["pdf", "rds"]),
-		expand("plots/qc_1d-{refset}.{ext}", refset = REFSETS, ext = ["pdf", "rds"]),
+		expand("plots/qc_1d_{plt}-{refset}.{ext}", 
+			plt = QC1D_PLTS, refset = REFSETS, ext = ["pdf", "rds"]),
 		expand("plots/qc_2d-{refset}.pdf", refset = REFSETS),
 		expand("plots/stat_{dim}-correlation.{ext}", dim = ["1d", "2d"], ext = ["pdf", "rds"]),
-		expand("plots/stat_1d_by_refset-{refset},{stat1d}.{ext}", refset = REFSETS, stat1d = STATS1D, ext = ["pdf", "rds"]),
+		# expand("plots/stat_1d_by_refset-{plt},{refset},{stat1d}.{ext}", 
+		# 	plt = STAT1D_REFSET_PLTS, refset = REFSETS, stat1d = STATS1D, ext = ["pdf", "rds"]),
 		expand("plots/stat_1d_by_reftyp-{plt},{reftyp},{stat1d}.{ext}", 
 			plt = STAT1D_REFTYP_PLTS, reftyp = REFTYPS, stat1d = STATS1D, ext = ["pdf", "rds"]),
-		expand("plots/stat_1d_by_method-{plt},{method},{stat1d}.{ext}", 
-			plt = STAT1D_METHOD_PLTS, method = METHODS, stat1d = STATS1D, ext = ["pdf", "rds"]),
-		expand("plots/stat_2d_by_refset-{refset},{stat2d}.{ext}", refset = REFSETS, stat2d = STATS2D, ext = ["pdf", "rds"]),
-		expand("plots/stat_2d_by_reftyp-{reftyp},{stat2d}.{ext}", reftyp = REFTYPS, stat2d = STATS2D, ext = ["pdf", "rds"])
+		expand("plots/stat_1d_by_method-{plt},{stat1d}.{ext}", 
+			plt = STAT1D_METHOD_PLTS, stat1d = STATS1D, ext = ["pdf", "rds"]),
+		expand("plots/stat_2d_by_refset-{refset},{stat2d}.{ext}", 
+			refset = REFSETS, stat2d = STATS2D, ext = ["pdf", "rds"]),
+		expand("plots/stat_2d_by_reftyp-{reftyp},{stat2d}.{ext}", 
+			reftyp = REFTYPS, stat2d = STATS2D, ext = ["pdf", "rds"])
 
 # PREPROCESSING ================================================================
 
@@ -246,8 +257,8 @@ def stat1d_by_refset(wildcards):
 	return [x for x in stat1d(wildcards) if wildcards.refset in x]
 
 def stat1d_by_reftyp(wildcards):
-	return [x for x in stat1d(wildcards) for r in REFSETS \
-			if REFSETS.get(r) == wildcards.reftyp and r in x]
+	return [x for x in stat1d(wildcards) for s in SIMSETS \
+			if SIMSETS.get(s) == wildcards.reftyp and s in x]
 
 def stat2d(wildcards):
 	return expand(expand("results/stat_2d-{{simset}},{metric1},{metric2},{{stat2d}}.rds", 
@@ -264,8 +275,8 @@ def stat2d_by_refset(wildcards):
 	return [x for x in stat2d(wildcards) if wildcards.refset in x]
 
 def stat2d_by_reftyp(wildcards):
-	return [x for x in stat2d(wildcards) for r in REFSETS \
-			if REFSETS.get(r) == wildcards.reftyp and r in x]
+	return [x for x in stat2d(wildcards) for s in SIMSETS \
+			if SIMSETS.get(s) == wildcards.reftyp and s in x]
 
 # VISUALIZATION ================================================================
 
@@ -284,13 +295,13 @@ rule plot_dr:
 
 rule plot_qc_1d:
 	priority: 89
-	input:	"scripts/07-plot_qc_1d.R",
+	input:	"scripts/07-plot_qc_1d-{plt}.R",
 			"scripts/utils-plotting.R",
 			res = qc_by_refset
 	params:	lambda wc, input: ";".join(input.res)
-	output:	"plots/qc_1d-{refset}.pdf",
-			"plots/qc_1d-{refset}.rds"
-	log:	"logs/plot_qc_1d-{refset}.Rout"
+	output:	"plots/qc_1d_{plt}-{refset}.pdf",
+			"plots/qc_1d_{plt}-{refset}.rds"
+	log:	"logs/plot_qc_1d_{plt}-{refset}.Rout"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	fun={input[1]} res={params} plt={output[0]} ggp={output[1]}" {input[0]} {log}'''
@@ -335,13 +346,13 @@ rule plot_stat_1d_by_method:
 
 rule plot_stat_1d_by_refset:
 	priority: 89
-	input:	"scripts/07-plot_stat_1d_by_refset.R",
+	input:	"scripts/07-plot_stat_1d_by_refset-{plt}.R",
 			"scripts/utils-plotting.R",
 			res = stat1d_by_refset
 	params:	lambda wc, input: ";".join(input.res)
-	output:	"plots/stat_1d_by_refset-{refset},{stat1d}.pdf",
-			"plots/stat_1d_by_refset-{refset},{stat1d}.rds"
-	log:	"logs/plot_stat_1d_by_refset-{refset},{stat1d}.Rout"
+	output:	"plots/stat_1d_by_refset-{plt},{refset},{stat1d}.pdf",
+			"plots/stat_1d_by_refset-{plt},{refset},{stat1d}.rds"
+	log:	"logs/plot_stat_1d_by_refset-{plt},{refset},{stat1d}.Rout"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	fun={input[1]} res={params} plt={output[0]} ggp={output[1]}" {input[0]} {log}'''

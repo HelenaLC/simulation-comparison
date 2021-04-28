@@ -65,6 +65,8 @@ methods <- gsub(pat, "\\1", list.files("scripts", pat))
 
 pat <- ".*calc_qc-(.*)\\.R"
 .metrics <- gsub(pat, "\\1", list.files("scripts", pat))
+.none_metrics <- c("gene_pve", "cell_sw")
+.metrics <- setdiff(.metrics, .none_metrics)
 .gene_metrics <- grep("gene", .metrics, value = TRUE)
 .cell_metrics <- grep("cell", .metrics, value = TRUE)
 
@@ -74,16 +76,17 @@ pat <- ".*calc_qc-(.*)\\.R"
     gene_cv  = "coefficient of variation",
     gene_frq = "gene detection frequency",
     gene_cor = "gene-to-gene correlation",
-    gene_pve = "percent variance explained",
     cell_lls = "log-library size",
     cell_frq = "cell detection frequency",
     cell_cor = "cell-to-cell correlation",
+    gene_pve = "percent variance explained",
     cell_sw = "silhouette width")
 
-n <- 5
+n <- 3
 .metrics_pal <- c(
     setNames(hcl.colors(n*length(.gene_metrics), "Reds" )[seq(1, n*length(.gene_metrics), n)], .gene_metrics),
-    setNames(hcl.colors(n*length(.cell_metrics), "Blues")[seq(1, n*length(.cell_metrics), n)], .cell_metrics))
+    setNames(hcl.colors(n*length(.cell_metrics), "Blues")[seq(1, n*length(.cell_metrics), n)], .cell_metrics),
+    setNames(brewer.pal(3, "Greens")[-1], .none_metrics))
 names(.metrics_pal) <- .metrics_lab
 
 pat <- ".*-stat_1d-(.*)\\.R"

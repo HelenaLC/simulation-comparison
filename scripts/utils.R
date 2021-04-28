@@ -25,7 +25,10 @@
     i = c("global", "cluster", "batch"))
 {
     names(j) <- j <- intersect(i, names(colData(sce)))
-    cs <- lapply(j, function(.) split(seq(ncol(sce)), sce[[.]]))
+    cs <- lapply(j, function(.) {
+        ids <- droplevels(factor(sce[[.]]))
+        split(seq(ncol(sce)), ids)
+    })
     if ("global" %in% i)
         cs <- c(list(global = list(foo = seq(ncol(sce)))), cs)
     return(cs)
@@ -81,3 +84,13 @@
     if (nrow(res) != 0) return(res)
 }
 
+# group can be either "cluster" or "batch"
+.find_markers <- function(sce, group){
+    library(scran)
+    out <- findMarkers(counts(sce), groups =colData(sce)[[group]] )[[1]]
+    sig <- out$FDR < 0.05
+    pDE <- sum(sig)/nrow(out)
+    mean_lFC <- mean(abs(out$summary.logFC[sig]))
+    
+    list(pDE = pDE, mean_logFC = mean_lFC)
+}

@@ -16,10 +16,8 @@ x <- as.SingleCellExperiment(panc8)
 # (these are identical to counts)
 assay(x, "logcounts") <- NULL
 
-# keep 1st inDrop dataset
-x <- x[, x$tech != "indrop" 
-    | x$tech == "indrop" 
-    & x$replicate == "human1"]
+# exclude datasets with non-integer counts
+x <- x[, !x$tech %in% c("celseq", "celseq2", "fluidigmc1")]
 
 # drop spike-ins
 x <- x[-grep("ERCC", rownames(x)), ]
@@ -29,7 +27,7 @@ x <- x[rowSums(assay(x)) > 0, ]
 
 # subset & rename cell metadata
 colData(x) <- DataFrame(
-    batch = x$tech, 
+    batch = x$dataset, 
     cluster = x$celltype)
 
 # simplify gene & cell names

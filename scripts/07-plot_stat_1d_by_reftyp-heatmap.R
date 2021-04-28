@@ -6,8 +6,22 @@ df <- res %>%
         group, datset, subset) %>% 
     summarize_at("stat", mean) %>% # average across groups
     summarize_at("stat", mean) %>% # average across subsets
-    summarize_at("stat", mean) %>% # average across datsets
-    mutate(group = relevel(factor(group), ref = "global"))
+    summarize_at("stat", mean)     # average across datsets
+
+if (wcs$reftyp == "g") 
+    df <- df %>% 
+    rowwise() %>% 
+    mutate(
+        group = as.character(group),
+        group = case_when(
+            group != "global" ~ "group", 
+            TRUE ~ group)) %>% 
+    ungroup()
+
+df <- mutate(df, 
+    group = relevel(
+        factor(group), 
+        ref = "global"))
 
 # order methods by average across metrics
 ox <- df %>% 
@@ -46,4 +60,4 @@ thm <- theme(
 
 p <- .prettify(plt, thm)
 saveRDS(p, args$ggp)
-ggsave(args$plt, p, width = 6, height = 6, units = "cm")
+ggsave(args$plt, p, width = 8, height = 6, units = "cm")

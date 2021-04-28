@@ -30,7 +30,7 @@ ps <- lapply(seq_along(gg), function(i) {
   plt <- ggplot(gg[[i]],
     aes(x, y, col = method, fill = method)) +
     facet_wrap(~ method, nrow = ifelse(nlevels(df$method) > 8, 2, 1)) +
-    geom_point_rast(size = 0.2, alpha = 0.1, shape = 16) +
+    geom_point_rast(size = 0.2, alpha = 0.1, shape = 19) +
     geom_smooth(size = 0.3, show.legend = FALSE,
       method = "loess", formula = y ~ x, span = 0.25, se = FALSE) +
     scale_fill_manual(values = .methods_pal) +

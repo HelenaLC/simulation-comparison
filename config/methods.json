@@ -1,6 +1,9 @@
 {
 	"BASiCS": ["b"],
+	"ESCO": ["x"],
 	"muscat": ["n", "b", "k"],
+	"muscat": ["n", "k"],
+	"powsimR": ["g"],
 	"scDD": ["n", "g"],
 	"scDesign": ["n"],
 	"scDesign2": ["n", "k"],

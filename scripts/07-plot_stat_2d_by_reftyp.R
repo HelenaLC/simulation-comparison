@@ -8,8 +8,22 @@ df <-  res %>%
     summarise_at("stat", mean) %>% # average across groups
     summarise_at("stat", mean) %>% # average across subsets
     summarise_at("stat", mean) %>% # average across datsets
-    mutate(group = relevel(factor(group), ref = "global")) %>% 
     mutate(metrics = paste(metric1, metric2, sep = "\n"))
+
+if (wcs$reftyp == "g") 
+    df <- df %>% 
+    rowwise() %>% 
+    mutate(
+        group = as.character(group),
+        group = case_when(
+            group != "global" ~ "group", 
+            TRUE ~ group)) %>% 
+    ungroup()
+
+df <- mutate(df, 
+    group = relevel(
+        factor(group), 
+        ref = "global"))
 
 # order methods by average across metrics
 ox <- df %>% 

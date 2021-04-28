@@ -24,10 +24,11 @@ oy <- df %>%
 plt <- ggplot(df, aes(method, metrics, fill = stat)) +
     (if (!all(df$group == "global")) facet_grid(~ group)) +
     geom_tile(col = "white") +
-    scale_fill_viridis_c(
+    scale_fill_gradientn(
         .stats2d_lab[wcs$stat2d],
-        limits = c(0, NA),
-        na.value = "grey") +
+        limits = c(0, 1), 
+        na.value = "lightgrey",
+        colors = rev(hcl.colors(9, "RdPu"))) +
     coord_equal(3/2, expand = FALSE) +
     scale_x_discrete(limits = rev(ox)) +
     scale_y_discrete(limits = rev(oy)) +
