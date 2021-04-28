@@ -92,5 +92,12 @@
     pDE <- sum(sig)/nrow(out)
     mean_lFC <- mean(abs(out$summary.logFC[sig]))
     
-    list(pDE = pDE, mean_logFC = mean_lFC)
+    up <- findMarkers(counts(x), groups=colData(sce)[[group]], direction = "up")[[1]]
+    sig <- up$FDR < 0.05
+    pUp <- sum(sig)/nrow(up)
+    down <- findMarkers(counts(x), groups=colData(sce)[[group]], direction = "down")[[1]]
+    sig <- down$FDR < 0.05
+    pDown <- sum(sig)/nrow(down)
+    
+    list(pDE = pDE, mean_logFC = mean_lFC, pDown=pDown, pUp = pUp)
 }
