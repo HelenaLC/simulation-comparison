@@ -4,6 +4,9 @@ import itertools
 configfile: "config.yaml"
 R = config["R"]
 
+onsuccess:
+	shell('{R} CMD BATCH --no-restore --no-save scripts/08-make_all_figs.R logs/figs.Rout')
+
 DATSETS = glob_wildcards("scripts/00-get_data-{x}.R").x
 SUBSETS = json.loads(open("config/subsets.json").read())
 METHODS = json.loads(open("config/methods.json").read())
@@ -47,6 +50,8 @@ STAT1D_REFSET_PLTS = glob_wildcards("scripts/07-plot_stat_1d_by_refset-{x}.R").x
 STAT1D_REFTYP_PLTS = glob_wildcards("scripts/07-plot_stat_1d_by_reftyp-{x}.R").x
 STAT1D_METHOD_PLTS = glob_wildcards("scripts/07-plot_stat_1d_by_method-{x}.R").x
 
+STAT2D_REFTYP_PLTS = glob_wildcards("scripts/07-plot_stat_2d_by_reftyp-{x}.R").x
+
 rule all:
 	input:
 		"session_info.txt",
@@ -57,6 +62,8 @@ rule all:
 # simulation
 		expand("data/03-est/{simset}.rds", simset = SIMSETS),
 		expand("data/04-sim/{simset}.rds", simset = SIMSETS),
+		expand("results/rt_est_pars-{simset}.rds", simset = SIMSETS),
+		expand("results/rt_sim_data-{simset}.rds", simset = SIMSETS),
 # quality control
 		expand("results/qc_ref-{refset},{metric}.rds", refset = REFSETS, metric = METRICS),
 		expand("results/qc_sim-{simset},{metric}.rds", simset = SIMSETS, metric = METRICS),
@@ -86,8 +93,8 @@ rule all:
 			plt = STAT1D_METHOD_PLTS, stat1d = STATS1D, ext = ["pdf", "rds"]),
 		expand("plots/stat_2d_by_refset-{refset},{stat2d}.{ext}", 
 			refset = REFSETS, stat2d = STATS2D, ext = ["pdf", "rds"]),
-		expand("plots/stat_2d_by_reftyp-{reftyp},{stat2d}.{ext}", 
-			reftyp = REFTYPS, stat2d = STATS2D, ext = ["pdf", "rds"])
+		expand("plots/stat_2d_by_reftyp-{plt},{reftyp},{stat2d}.{ext}", 
+			plt = STAT2D_REFTYP_PLTS, reftyp = REFTYPS, stat2d = STATS2D, ext = ["pdf", "rds"])
 
 # PREPROCESSING ================================================================
 
@@ -128,23 +135,26 @@ rule est_pars:
 	input: 	"scripts/03-est_pars.R",
 			"scripts/03-est_pars-{method}.R",
 			rules.sub_data.output
-	output:	"data/03-est/{datset},{subset},{method}.rds"
+	output:	est = "data/03-est/{datset},{subset},{method}.rds",
+			rt = "results/rt_est_pars-{datset},{subset},{method}.rds"
 	log:	"logs/est_pars-{datset},{subset},{method}.Rout"
 	shell:	'''
-	{R} CMD BATCH --no-restore --no-save "--args fun={input[1]}\
-	sub={input[2]} est={output}" {input[0]} {log}'''
+	{R} CMD BATCH --no-restore --no-save "--args\
+	wcs={wildcards} fun={input[1]} sub={input[2]}\
+	est={output[0]} rt={output[1]}" {input[0]} {log}'''
 
 rule sim_data:
 	priority: 94
 	input: 	"scripts/04-sim_data.R",
 			"scripts/04-sim_data-{method}.R",
 			rules.sub_data.output,
-			rules.est_pars.output
-	output:	"data/04-sim/{datset},{subset},{method}.rds"
+			rules.est_pars.output.est
+	output:	sim = "data/04-sim/{datset},{subset},{method}.rds",
+			rt = "results/rt_sim_data-{datset},{subset},{method}.rds"
 	log:	"logs/sim_data-{datset},{subset},{method}.Rout"
 	shell:	'''
-	{R} CMD BATCH --no-restore --no-save "--args fun={input[1]}\
-	sub={input[2]} est={input[3]} sim={output}" {input[0]} {log}'''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards} fun={input[1]}\
+	sub={input[2]} est={input[3]} sim={output[0]} rt={output[1]}" {input[0]} {log}'''
 
 # QUALITY CONTROL ==============================================================
 
@@ -163,7 +173,7 @@ rule qc_sim:
 	priority: 93
 	input: 	"scripts/05-calc_qc.R",
 			"scripts/05-calc_qc-{metric}.R",
-			rules.sim_data.output
+			rules.sim_data.output.sim
 	output:	"results/qc_sim-{datset},{subset},{method},{metric}.rds"
 	log:	"logs/qc_sim-{datset},{subset},{method},{metric}.Rout"
 	shell:	'''
@@ -185,7 +195,7 @@ rule dr_ref:
 rule dr_sim:
 	priority: 92	
 	input: 	"scripts/05-calc_dr.R",
-			rules.sim_data.output
+			rules.sim_data.output.sim
 	output:	"results/dr_sim-{datset},{subset},{method}.rds"
 	log:	"logs/dr_sim-{datset},{subset},{method}.Rout"
 	shell:	'''
@@ -279,6 +289,20 @@ def stat2d_by_reftyp(wildcards):
 			if SIMSETS.get(s) == wildcards.reftyp and s in x]
 
 # VISUALIZATION ================================================================
+
+rule plot_rt:
+	priority: 89
+	input:	"scripts/07-plot_rt.R",
+			"scripts/utils-plotting.R",
+			est = expand("results/rt_est_pars-{simset}.rds", simset = SIMSETS),
+			sim = expand("results/rt_sim_pars-{simset}.rds", simset = SIMSETS)
+	params:	lambda wc, input: ";".join(input.est),
+			lambda wc, input: ";".join(input.sim)
+	output:	"plots/runtimes.pdf",
+	log:	"logs/plot_rt.Rout"
+	shell:	'''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+	fun={input[1]} est={params[0]} sim={params[1]} plt={output}" {input[0]} {log}'''
 
 rule plot_dr:
 	priority: 89
@@ -385,13 +409,13 @@ rule plot_stat_2d_by_refset:
 
 rule plot_stat_2d_by_reftyp:
 	priority: 89
-	input:	"scripts/07-plot_stat_2d_by_reftyp.R",
+	input:	"scripts/07-plot_stat_2d_by_reftyp-{plt}.R",
 			"scripts/utils-plotting.R",
 			res = stat2d_by_reftyp
 	params:	lambda wc, input: ";".join(input.res)
-	output:	"plots/stat_2d_by_reftyp-{reftyp},{stat2d}.pdf",
-			"plots/stat_2d_by_reftyp-{reftyp},{stat2d}.rds"
-	log:	"logs/plot_stat_2d_by_reftyp-{reftyp},{stat2d}.Rout"
+	output:	"plots/stat_2d_by_reftyp-{plt},{reftyp},{stat2d}.pdf",
+			"plots/stat_2d_by_reftyp-{plt},{reftyp},{stat2d}.rds"
+	log:	"logs/plot_stat_2d_by_reftyp-{plt},{reftyp},{stat2d}.Rout"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	fun={input[1]} res={params} plt={output[0]} ggp={output[1]}" {input[0]} {log}'''

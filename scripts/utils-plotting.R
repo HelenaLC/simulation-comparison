@@ -21,8 +21,11 @@ suppressPackageStartupMessages({
             id = case_when(group == "global" ~ "global", TRUE ~ id),
             id = relevel(factor(id), ref = "global"))
     if (any(grepl("^metric", names(df))))
-        df <- mutate(df, across(starts_with("metric"), function(.)
-            droplevels(factor(., names(.metrics_lab), .metrics_lab))))
+        df <- mutate(df, across(
+            starts_with("metric"), 
+            ~droplevels(factor(.x, 
+                levels = names(.metrics_lab), 
+                labels = .metrics_lab))))
     return(df)
 }
 
@@ -56,7 +59,7 @@ suppressPackageStartupMessages({
 
 # colors ----
 
-.groups_pal <- c(global = "grey40", batch = "grey80", cluster = "grey80")
+.groups_pal <- c(global = "grey40", batch = "grey80", cluster = "grey80", group = "grey80")
 
 pat <- ".*-sim_data-(.*)\\.R"
 methods <- gsub(pat, "\\1", list.files("scripts", pat))

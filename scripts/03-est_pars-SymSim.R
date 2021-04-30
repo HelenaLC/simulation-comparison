@@ -7,13 +7,12 @@ fun <- function(x) {
     y <- counts(x)
     if (!is.matrix(y))
         y <- as.matrix(y)
-    fn <- "foo.pdf"
     z <- BestMatchParams(
         tech = "UMI",
         counts = y,
-        plotfilename = fn,
+        plotfilename = "foo",
         n_optimal = 1)
-    file.remove(fn)
+    file.remove("foo.pdf")
     z$ngenes <- nrow(x)
     z$ncells_total <- ncol(x)
     n <- length(unique(x$batch))
