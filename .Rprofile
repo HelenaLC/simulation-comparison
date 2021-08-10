@@ -1,4 +1,3 @@
-source("scripts/utils.R")
 data.table::setDTthreads(threads = 1)
 
 .get_wcs <- function(wcs) {
@@ -15,7 +14,7 @@ data.table::setDTthreads(threads = 1)
 args <- R.utils::commandArgs(
 	trailingOnly = TRUE, 
 	asValues = TRUE)
-print(args$wcs)
+
 if (!is.null(args$wcs)) {
 	wcs <- .get_wcs(args$wcs)
 	args$wcs <- NULL

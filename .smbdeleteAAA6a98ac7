@@ -9,9 +9,7 @@ shiny/*
 figures/*
 
 logs/*
-meta/*
 data/*
-outs/*
-plts/*
-figs/*
+plots/*
+results/*
 !*/.gitkeep
