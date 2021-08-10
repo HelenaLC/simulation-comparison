@@ -5,8 +5,10 @@ i <- c("lls", "cluster", "batch")
 i <- intersect(i, names(df))
 
 ps <- lapply(i, function(.) {
-    plt <- ggplot(df, aes(TSNE1, TSNE2, 
-        col = .data[[.]], fill = .data[[.]])) +
+    plt <- ggplot(df, aes_string(
+        paste0(wcs$dimred, 1),
+        paste0(wcs$dimred, 2),
+        col = ., fill = .)) + 
         (if (length(i) == 1) {
             facet_wrap(~ method, nrow = 2) 
         } else {

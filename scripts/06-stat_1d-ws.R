@@ -1,1 +1,0 @@
-fun <- function(x, y) waddR::wasserstein_metric(x, y)

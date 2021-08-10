@@ -30,7 +30,7 @@ ps <- lapply(seq_along(ps), function(i) {
 })
 ps1 <- ps
 
-pat <- "stat_2d_by_reftyp-(n|b|k|g),ks2\\.rds"
+pat <- "stat_2d_by_reftyp-heatmap,(n|b|k|g),ks2\\.rds"
 (fns <- list.files("plots", pat, full.names = TRUE))
 names(fns) <- gsub(pat, "\\1", basename(fns))
 
