@@ -1,0 +1,15 @@
+.DS_Store
+.snakemake
+
+._*
+*.txt
+*.html
+
+logs/*
+meta/*
+data/*
+outs/*
+plts/*
+figs/*
+supp/*
+!*/.gitkeep
