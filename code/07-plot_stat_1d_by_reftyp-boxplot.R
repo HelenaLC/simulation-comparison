@@ -1,64 +1,60 @@
+# wcs <- list(reftyp = "n", stat1d = "ks")
+# args <- list(
+#     fun = "code/utils-plotting.R",
+#     res = "outs/obj-stat_1d.rds",
+#     rds = sprintf("stat_1d_by_reftyp-boxplot,%s,%s.rds", wcs$reftyp, wcs$stat1d),
+#     pdf = sprintf("stat_1d_by_reftyp-boxplot,%s,%s.pdf", wcs$reftyp, wcs$stat1d))
+
 source(args$fun)
-df <- .read_res(args$res)
-head(df)
+res <- readRDS(args$res)
 
-if (wcs$reftyp == "g") 
-    df <- df %>% 
-    rowwise() %>% 
-    mutate(
-        group = as.character(group),
-        group = case_when(
-            group != "global" ~ "group", 
-            TRUE ~ group)) %>% 
-    ungroup()
+df <- res %>% 
+    # keep data of interest
+    filter(
+        reftyp == wcs$reftyp, 
+        stat1d == wcs$stat1d) %>%
+    .filter_res() %>% 
+    # scale values b/w 0 and 1 for visualization
+    group_by(metric) %>% 
+    mutate(stat = stat/max(stat, na.rm = TRUE))
 
-df <- mutate(df, 
-    group = relevel(
-        factor(group), 
-        ref = "global"))
+pal <- .methods_pal[levels(df$method)]
+lab <- parse(text = paste(
+    sep = "~",
+    sprintf("bold(%s)", LETTERS), 
+    gsub("\\s", "~", names(pal))))
 
-if (wcs$reftyp == "n") {
-    col <- "method"
-    fill <- "method"
-    group <- NULL
-    pal <- .methods_pal[levels(df$method)]
-} else {
-    df$foo <- with(df, paste0(group, method))
-    col <- "method"
-    fill <- "group"
-    group <- "foo"
-    pal <- .groups_pal[levels(df$group)]
-}
+anno <- df %>% 
+    group_by(method, metric) %>% 
+    summarize_at("stat", median) %>% 
+    mutate(letter = LETTERS[match(method, levels(method))])
 
-switch(wcs$stat1d,
-    ks = {
-        ylab <- "KS statistic"
-        scales <- "free_x"
-        ylims <- c(0, 1)
-    }, 
-    ws = {
-        ylab <- "Wasserstein metric"
-        scales <- "free"
-        ylims <- c(0, NA)
-    }
-)
-
-plt <- ggplot(df, aes_string(
-    "reorder_within(method, stat, metric)", 
-    "stat", col = col, fill = fill, group = group)) +
-    facet_wrap(~ metric, nrow = 2, scales = scales) +
+plt <- ggplot(df, aes(
+    reorder_within(method, stat, metric, median), 
+    stat, col = method, fill = method)) +
+    facet_wrap(~ metric, nrow = 3, scales = "free_x") +
     geom_boxplot(
         outlier.size = 0.25, outlier.alpha = 1,
         size = 0.25, alpha = 0.25, key_glyph = "point") + 
-    scale_fill_manual(values = pal) +
-    scale_color_manual(values = .methods_pal[levels(df$method)]) +
-    scale_y_continuous(limits = ylims, n.breaks = 3) +
-    labs(x = NULL, y = ylab)
+    geom_text(data = anno, 
+        size = 1.5, color = "black", 
+        aes(label = letter, y = -0.075)) + 
+    scale_fill_manual(values = pal, labels = lab) +
+    scale_color_manual(values = pal, labels = lab) +
+    scale_x_reordered(NULL) +
+    scale_y_continuous(
+        paste(ifelse(wcs$stat1d == "ws", "scaled", ""),
+            .stats1d_lab[wcs$stat1d]),
+        limits = c(-0.1, 1), n.breaks = 3)
 
 thm <- theme(
+    legend.text.align = 0,
+    legend.title = element_blank(),
     axis.text.x = element_blank(),
+    axis.title.x = element_blank(),
     axis.ticks.x = element_blank())
 
 fig <- .prettify(plt, thm)
+
 saveRDS(fig, args$rds)
-ggsave(args$pdf, fig, width = 16, height = 6, units = "cm")
+ggsave(args$pdf, fig, width = 16, height = 9, units = "cm")

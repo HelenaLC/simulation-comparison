@@ -3,7 +3,8 @@ suppressPackageStartupMessages({
     library(ggplot2)
     library(ggpubr)
     library(ggrastr)
-    library(ggridges)
+    library(ggrepel)
+    library(magrittr)
     library(patchwork)
     library(RColorBrewer)
     library(tidyr)
@@ -15,13 +16,21 @@ suppressPackageStartupMessages({
         replace_na(list(method = "ref")) %>% 
         mutate(method = droplevels(factor(method, names(.methods_pal))))
     if (all(c("datset", "subset") %in% names(df)))
-        df <- mutate(df, 
-            refset = paste(datset, subset, sep = ","))
+        df <- mutate(df, refset = paste(datset, subset, sep = ","))
     if ("id" %in% names(df))
         df <- mutate(df,
             group = relevel(factor(group), ref = "global"),
             id = case_when(group == "global" ~ "global", TRUE ~ id),
             id = relevel(factor(id), ref = "global"))
+    if (all(c("refset", "group") %in% names(df)))
+        df <- group_by(df, refset) %>% 
+            mutate(.group = as.character(group)) %>% 
+            mutate(reftyp = ifelse(any(.group == "batch"), "b", 
+                ifelse(any(.group == "cluster"), "k", "n")),
+                reftyp = factor(reftyp, c("n", "b", "k"))) %>% 
+            select(-.group)
+    if (sum(grepl("method", names(df))) > 1)
+        df <- rename(df, sim_method = method)
     if (any(grepl("^metric", names(df))))
         df <- mutate(df, across(
             starts_with("metric"), 
@@ -31,23 +40,32 @@ suppressPackageStartupMessages({
     return(df)
 }
 
-# integration ----
-
-.eval_batch <- \(df) df %>% 
+.filter_res <- function(df) df %>% 
     mutate(
-        # center around 0
-        cms = cms - 0.5,
-        # center around 0 & scale to range 1
-        ldf = ldf / diff(range(ldf))) %>% 
-    # compute overall score
-    mutate(avg = (cms + ldf) / 2)
+        .metric = names(.metrics_lab)[
+            match(metric, .metrics_lab)],
+        across(c(group, id), as.character)) %>% 
+    filter(
+        # keep everything for type 'n'
+        reftyp == "n" |
+        # keep all groupings for global & gene-level summaries
+        .metric %in% .none_metrics |
+        .metric %in% .gene_metrics |
+        # for log-library size & 
+        # cell detection frequency, 
+        # group-level results only 
+        (group != id & grepl("cell_(lls|frq)", .metric))) %>% 
+    ungroup() %>% 
+    select(-.metric) %>% 
+    mutate(across(c(metric, method), droplevels))
 
-.batch_labs <- c(
-    cms = "CMS - 0.5", 
-    ldf = expression(Delta~"LDF*"), 
-    avg = "Integration\nscore")
-
-# themes ----
+# repeatedly average statistics, e.g., 
+# across groups, subsets, datsets, etc. 
+.avg <- \(df, n) {
+    .fun <- \(df) summarise_at(df, "stat", mean, na.rm = TRUE)
+    res <- Reduce(\(df, foo) .fun(df), seq(n), init = df, accumulate = TRUE)
+   ungroup(res[[n + 1]])
+}
 
 .prettify <- function(plt, thm = NULL, base_size = 6) 
 {
@@ -75,7 +93,7 @@ suppressPackageStartupMessages({
     return(plt + thm)
 }
 
-# colors ----
+# aesthetics ----
 
 .groups_pal <- c(global = "grey40", batch = "grey80", cluster = "grey80", group = "grey80")
 
@@ -86,7 +104,7 @@ methods <- gsub(pat, "\\1", list.files("code", pat))
 
 pat <- ".*calc_qc-(.*)\\.R"
 .metrics <- gsub(pat, "\\1", list.files("code", pat))
-.none_metrics <- c("gene_pve", "cell_sw")
+.none_metrics <- c("gene_pve", "cell_cms", "cell_sw")
 .metrics <- setdiff(.metrics, .none_metrics)
 .gene_metrics <- grep("gene", .metrics, value = TRUE)
 .cell_metrics <- grep("cell", .metrics, value = TRUE)
@@ -100,14 +118,18 @@ pat <- ".*calc_qc-(.*)\\.R"
     cell_lls = "log-library size",
     cell_frq = "cell detection frequency",
     cell_cor = "cell-to-cell correlation",
+    cell_ldf = "local density factor",
+    cell_pcd = "cell-to-cell distance",
+    cell_knn = "KNN occurences",
     gene_pve = "percent variance explained",
+    cell_cms = "cell-specific mixing score",
     cell_sw = "silhouette width")
 
 n <- 3
 .metrics_pal <- c(
     setNames(hcl.colors(n*length(.gene_metrics), "Reds" )[seq(1, n*length(.gene_metrics), n)], .gene_metrics),
     setNames(hcl.colors(n*length(.cell_metrics), "Blues")[seq(1, n*length(.cell_metrics), n)], .cell_metrics),
-    setNames(brewer.pal(3, "Greens")[-1], .none_metrics))
+    setNames(brewer.pal(1+length(.none_metrics), "Greens")[-1], .none_metrics))
 names(.metrics_pal) <- .metrics_lab
 
 pat <- ".*-stat_1d-(.*)\\.R"

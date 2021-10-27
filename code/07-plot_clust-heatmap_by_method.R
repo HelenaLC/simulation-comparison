@@ -1,9 +1,6 @@
-source(args$fun)
+source(args$uts)
 
-res <- .read_res(args$res) %>% 
-    mutate(refset = paste(datset, subset, sep = ",")) %>%
-    select(-c(datset, subset)) %>% 
-    rename(sim_method = method)
+res <- .read_res(args$res)
 
 df <- res %>% 
     group_by(

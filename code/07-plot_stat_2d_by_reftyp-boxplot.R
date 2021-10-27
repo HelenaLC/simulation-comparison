@@ -1,68 +1,64 @@
+# wcs <- list(stat2d = "emd", reftyp = "n")
+# args <- list(
+#     fun = "code/utils-plotting.R",
+#     res = "outs/obj-stat_2d.rds",
+#     rds = "plts/stat_2d_by_reftyp-boxplot,b,ks2.rds",
+#     pdf = "plts/stat_2d_by_reftyp-boxplot,b,ks2.pdf")
+
 source(args$fun)
+res <- .read_res(args$res)
+    
+df <- res %>% 
+    mutate(metrics = paste(metric1, metric2, sep = "\n")) %>% 
+    # keep statistic of interest
+    filter(stat2d == wcs$stat2d) %>% 
+    # keep group-level comparisons only
+    { if (wcs$reftyp == "n") . else
+        mutate(., across(
+            c(group, id), 
+            as.character)) %>% 
+        filter(group != id) } %>% 
+    # scale values b/w 0 and 1 for visualization
+    group_by(metrics) %>% 
+    mutate(stat = stat/max(stat, na.rm = TRUE))
 
-df <- .read_res(args$res)
+pal <- .methods_pal[levels(df$method)]
+lab <- parse(text = paste(
+    sep = "~",
+    sprintf("bold(%s)", LETTERS), 
+    gsub("\\s", "~", names(pal))))
 
-if (wcs$reftyp == "g") 
-    df <- df %>% 
-    rowwise() %>% 
-    mutate(
-        group = as.character(group),
-        group = case_when(
-            group != "global" ~ "group", 
-            TRUE ~ group)) %>% 
-    ungroup()
+anno <- df %>% 
+    group_by(method, metrics) %>% 
+    summarize_at("stat", median) %>% 
+    mutate(letter = LETTERS[match(method, levels(method))])
 
-df <- df %>% mutate(
-    metrics = paste(metric1, metric2, sep = "\n"),
-    group = relevel(droplevels(factor(group)), ref = "global"))
-
-if (wcs$reftyp == "n") {
-    col <- "method"
-    fill <- "method"
-    group <- NULL
-    pal <- .methods_pal[levels(df$method)]
-} else {
-    df$foo <- with(df, paste0(group, method))
-    col <- "method"
-    fill <- "group"
-    group <- "foo"
-    pal <- .groups_pal
-    pal <- pal[levels(df$group)]
-}
-
-switch(wcs$stat2d, 
-    ks2 = {
-        ylab <- "KS statistic"
-        scales <- "free_x"
-        ylims <- c(0, 1)
-    }, 
-    emd = {
-        ylab <- "EMD"
-        scales <- "free"
-        ylims <- c(0, NA)
-    }
-)
-
-plt <- ggplot(df, aes_string(
-    "reorder_within(method, stat, metrics)", 
-    "stat", col = col, fill = fill, group = group)) +
-    facet_wrap(~ metrics, nrow = 1, scales = scales) +
+plt <- ggplot(df, aes(
+    reorder_within(method, stat, metrics, median), 
+    stat, col = method, fill = method)) +
+    facet_wrap(~ metrics, nrow = 3, scales = "free_x") +
     geom_boxplot(
         outlier.size = 0.25, outlier.alpha = 1,
         size = 0.25, alpha = 0.25, key_glyph = "point") + 
-    scale_fill_manual(values = pal) +
-    scale_color_manual(values = .methods_pal[levels(df$method)]) +
-    scale_y_continuous(limits = ylims, n.breaks = 3) +
-    labs(x = NULL, y = ylab)
+    geom_text(data = anno, 
+        size = 1.5, color = "black", 
+        aes(label = letter, y = -0.075)) + 
+    scale_fill_manual(values = pal, labels = lab) +
+    scale_color_manual(values = pal, labels = lab) +
+    scale_x_reordered(NULL) +
+    scale_y_continuous(
+        paste(ifelse(wcs$stat2d == "emd", "scaled", ""),
+            .stats2d_lab[wcs$stat2d]),
+        limits = c(-0.1, 1), n.breaks = 3)
 
 thm <- theme(
+    legend.text.align = 0,
+    legend.title = element_blank(),
     axis.text.x = element_blank(),
     axis.title.x = element_blank(),
     axis.ticks.x = element_blank())
 
 fig <- .prettify(plt, thm)
-if (!is.null(fig$guides$col))
-    fig$guides$col$ncol <- 2
 
 saveRDS(fig, args$rds)
-ggsave(args$pdf, fig, width = 18, height = 4, units = "cm")
+ggsave(args$pdf, fig, width = 16, height = 9, units = "cm")

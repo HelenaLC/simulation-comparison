@@ -9,11 +9,9 @@ fun <- function(x) {
     y <- counts(x)
     if (!is.matrix(x))
         y <- as.matrix(y)
-    g <- factor(sample(2, ncol(y), TRUE))
+    g <- sample(2, ncol(y), TRUE)
     mm <- model.matrix(~g)
-    p <- getDatasetZTNB(
-        counts = y,
-        design = mm)
+    p <- getDatasetZTNB(y, mm)
     list(
         dataset = y,
         group = g,

@@ -1,9 +1,12 @@
-source(args$fun)
+# args <- list(
+#     uts = "code/utils-plotting.R",
+#     rds = "plts/clust-correlations.rds",
+#     pdf = "plts/clust-correlations.pdf",
+#     res = list.files("outs", "^clust_res", full.names = TRUE))
 
-res <- .read_res(args$res) %>% 
-    mutate(refset = paste(datset, subset, sep = ",")) %>%
-    select(-c(datset, subset)) %>% 
-    rename(sim_method = method)
+source(args$uts)
+
+res <- .read_res(args$res)
 
 mat <- res %>%
     pivot_wider(
@@ -11,7 +14,7 @@ mat <- res %>%
         names_from = "sim_method",
         values_from = "F1") %>%
     select(any_of(c("ref", names(.methods_pal)))) %>%
-    cor(method = "pearson")
+    cor(method = "pearson", use = "pairwise.complete.obs")
 
 xo <- rownames(mat)[hclust(dist(mat))$order]
 yo <- rownames(mat)[hclust(dist(t(mat)))$order]
@@ -29,13 +32,14 @@ df <- mat %>%
         from = factor(from, levels = yo)) %>% 
     filter(as.numeric(to) <= as.numeric(from))
 
+min <- floor(min(df$corr)/0.1)*0.1
 plt <- ggplot(df, aes(from, to, fill = corr)) +
     geom_tile() +
-    scale_fill_distiller(
-        expression(rho),
+    scale_fill_distiller("r",
         palette = "RdYlBu",
         na.value = "lightgrey",
         direction = -1,
+        limits = c(min, 1),
         breaks = c(0, 1)) +
     coord_equal(expand = FALSE) +
     scale_x_discrete(limits = rev(xo)) 

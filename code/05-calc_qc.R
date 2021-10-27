@@ -1,3 +1,4 @@
+source(args$uts)
 source(args$fun)
 
 # each QC script should specify
@@ -46,17 +47,22 @@ if (exists("n_cells") && !is.null(n_cells)) {
 # ------------------------------------------------------------------------------
 
 sce <- readRDS(args$sce)
-sce <- ppFUN(sce)
-res <- .calc_qc(sce, 
-    fun = qcFUN, 
-    groups = groups,
-    n_genes = n_genes,
-    n_cells = n_cells)
+
+# skip if simulation failed (return NULL)
+res <- if (!is.null(sce)) {
+    sce <- ppFUN(sce)
+    .calc_qc(sce, 
+        fun = qcFUN, 
+        groups = groups,
+        n_genes = n_genes,
+        n_cells = n_cells)
+}
 
 res <- if (!is.null(res)) {
     if (is.null(wcs$method)) 
         wcs$method <- NA
     data.frame(wcs, res)
 }
+
 print(head(res))
 saveRDS(res, args$res)

@@ -1,10 +1,18 @@
-source("code/utils-plotting.R")
+suppressPackageStartupMessages({
+    library(dplyr)
+    library(tidyr)
+})
+
+source(args$uts)
 
 sce <- readRDS(args$sce)
 true <- droplevels(factor(sce$cluster))
 
-res <- .read_res(
-    unlist(args[c("ref", "sim")]))
+res <- args[c("ref", "sim")] %>% 
+    unlist() %>% 
+    lapply(readRDS) %>% 
+    bind_rows() %>% 
+    replace_na(list(method = "ref"))
     
 # for each simulators & clustering method, match prediction w/ truth 
 # using Hungarian algorithm & compute precision, recall, F1 score 

@@ -1,35 +1,32 @@
-source(args$fun)
+# wcs <- list(val = "cms")
+# args <- list(
+#     uts1 = "code/utils-plotting.R",
+#     uts2 = "code/utils-integration.R",
+#     rds = paste0("plts/batch-densities_", wcs$val, ".rds"),
+#     pdf = paste0("plts/batch-densities_", wcs$val, ".pdf"),
+#     res = list.files("outs", "^batch_res", full.names = TRUE))
 
-# args <- list(res = list.files("outs", "batch_res", full.names = TRUE))
+source(args$uts1)
+source(args$uts2)
 
-res <- .read_res(args$res) %>%
-    dplyr::rename(sim_method = method) %>%
-    mutate(refset = paste(datset, subset, sep = ","))
+res <- .read_res(args$res)
 
-fig <- if (wcs$val != "avg") {
-    lab <- switch(wcs$val, 
-        cms = "CMS", 
-        ldf = expression(Delta~"LDF"),
-        avg = "Average\nscore")
-    
-    plt <- ggplot(res, aes(
+lim <- switch(wcs$val, bcs = c(0, 1), c(-0.5, 0.5))
+
+fig <- if (wcs$val != "bcs") {
+    df <- .cms_ldf(res)
+    plt <- ggplot(df, aes(
         .data[[wcs$val]], ..ndensity.., 
-        col = sim_method, fill = sim_method)) +
-        facet_grid(batch_method ~ refset, scales = "free_x") +
+        col = batch_method, fill = batch_method)) +
+        facet_grid(sim_method ~ refset) +
+        geom_vline(xintercept = 0, size = 0.2) +
         geom_density(alpha = 0, key_glyph = "point") +
-        scale_x_continuous(breaks = c(0, 0.5, 1)) +
-        scale_y_continuous(breaks = c(0, 0.5, 1), limits = c(0, 1)) +
-        scale_fill_manual(
-            values = .methods_pal,
-            breaks = levels(res$sim_method)) +
-        scale_color_manual(NULL,
-            values = .methods_pal,
-            breaks = levels(res$sim_method)) +
-        labs(x = lab, y = "scaled density")
-        
-    thm <- NULL
+        scale_x_continuous(limits = lim, n.breaks = 3) +
+        scale_y_continuous(limits = c(0, 1), n.breaks = 3) +
+        labs(x = .batch_labs[wcs$val], y = "scaled density")
+    thm <- theme(axis.text.x = element_text(angle = 45, hjust = 1))
     .prettify(plt, thm)
-} else NULL
+}
 
 saveRDS(fig, args$rds)
-ggsave(args$pdf, fig, width = 15, height = 8, units = "cm")
+ggsave(args$pdf, fig, width = 16, height = 12, units = "cm")

@@ -23,7 +23,7 @@ REFSETS = {"{},{}".format(d,s): t
 	for d in SUBSETS.keys()
 	for s in SUBSETS[d].keys()
 	for t in SUBSETS[d][s]["type"]}
-REFTYPS = set(REFSETS.values())
+REFTYPS = ["n", "b", "k"]
 
 # combine refsets & methods into simsets 
 # if the method supports the refset's 'type'
@@ -39,14 +39,16 @@ SIMSETS = {s: REFSETS.get(r)
 # get quality control summaries
 METRICS = glob_wildcards("code/05-calc_qc-{x}.R").x
 
-# pair up gene-/cell-level summaries, respectively,
-# excluding correlations, PCE & silhouette width
+# pair up gene-/cell-level summaries, respectively (excluding
+# correlations, PVE, CMS, PC distance & silhouette width)
 GENE_METRICS = [m for m in METRICS if "gene_" in m]
 CELL_METRICS = [m for m in METRICS if "cell_" in m]
 
-ex = ["gene_cor", "cell_cor", "gene_pve", "cell_sw"]
-GENE_METRICS = [m for m in GENE_METRICS if m not in ex]
-CELL_METRICS = [m for m in CELL_METRICS if m not in ex]
+GENE_EXCLUDE = ["gene_pve", "gene_cor"]
+CELL_EXCLUDE = ["cell_sw", "cell_cms", "cell_ldf", "cell_pcd", "cell_cor"]
+
+GENE_METRICS = [m for m in GENE_METRICS if m not in GENE_EXCLUDE]
+CELL_METRICS = [m for m in CELL_METRICS if m not in CELL_EXCLUDE]
 
 METRIC_PAIRS = \
 	list(itertools.combinations(GENE_METRICS, 2)) + \
@@ -60,23 +62,21 @@ STATS2D = glob_wildcards("code/06-stat_2d-{x}.R").x
 METHODS_BATCH = glob_wildcards("code/05-calc_batch-{x}.R").x
 METHODS_CLUST = glob_wildcards("code/05-calc_clust-{x}.R").x
 METHODS_CLUST.remove("FlowSOM")
+METHODS_CLUST.remove("TSCAN")
 
 # split refsets, methods & simsets by type
 REFSETS_TYP_N = [r for r,t in REFSETS.items() if t == "n"]
 REFSETS_TYP_B = [r for r,t in REFSETS.items() if t == "b"]
 REFSETS_TYP_K = [r for r,t in REFSETS.items() if t == "k"]
-REFSETS_TYP_G = [r for r,t in REFSETS.items() if t == "g"]
 
 METHODS_TYP_N = [m for m,t in METHODS.items() if "n" in t]
 METHODS_TYP_B = [m for m,t in METHODS.items() if "b" in t]
 METHODS_TYP_K = [m for m,t in METHODS.items() if "k" in t]
-METHODS_TYP_G = [m for m,t in METHODS.items() if "g" in t]
 
 METHODS_BY_TYP = {
 	"n": METHODS_TYP_N,
 	"b": METHODS_TYP_B,
-	"k": METHODS_TYP_K,
-	"g": METHODS_TYP_G}
+	"k": METHODS_TYP_K}
 
 rts_con = json.load(open("meta/runtimes.json"))
 res_rts = list()
@@ -97,6 +97,8 @@ for refset,params in rts_con.items():
 		rep = list(range(1, 6)))
 
 # get target figures
+FIGS_QC_REF = glob_wildcards("code/07-plot_qc_ref-{x}.R").x
+
 FIGS_STAT1D = glob_wildcards("code/07-plot_stat_1d-{x}.R").x
 FIGS_STAT2D = glob_wildcards("code/07-plot_stat_2d-{x}.R").x
 
@@ -110,11 +112,14 @@ FIGS_STAT2D_REFTYP = glob_wildcards("code/07-plot_stat_2d_by_reftyp-{x}.R").x
 FIGS_BATCH = glob_wildcards("code/07-plot_batch-{x}.R").x
 FIGS_CLUST = glob_wildcards("code/07-plot_clust-{x}.R").x
 
+FIGS = glob_wildcards("code/08-fig_{x}.R").x
+FIGS.remove("runtimes")
+
 # ==============================================================================
 
 rule all:
 	input:
-		"session_info.txt",
+		#"session_info.txt",
 		expand([
 	# preprocessing
 			"data/00-raw/{datset}.rds",
@@ -152,14 +157,17 @@ rule all:
 			"outs/batch_ref-{refset},{method_batch}.rds",
 			"outs/batch_res-{refset},{method_batch}.rds",
 			"outs/batch_sim-{refset},{method},{method_batch}.rds",
-			"outs/batch_res-{refset},{method},{method_batch}.rds"],
+			"outs/batch_res-{refset},{method},{method_batch}.rds",
+			"outs/dr_batch_ref-{refset},{method_batch}.rds",
+			"outs/dr_batch_sim-{refset},{method},{method_batch}.rds"],
 			refset = REFSETS_TYP_B, 
 			method = METHODS_TYP_B,
 			method_batch = METHODS_BATCH),
-		expand(
-			"plts/batch-{fig}_{val}.{ext}",
+		expand([
+			"plts/batch-dimred.{ext}",
+			"plts/batch-{fig}_{val}.{ext}"],
 			fig = FIGS_BATCH,
-			val = ["cms", "ldf", "avg"],
+			val = ["cms", "ldf", "bcs"],
 			ext = ["rds", "pdf"]),
 	# clustering
 		expand([
@@ -177,8 +185,12 @@ rule all:
 		expand([
 			"outs/fns-{pat}.txt",
 			"outs/obj-{pat}.rds"],
-			pat = ["stat_1d", "stat_2d", "batch_res", "clust_res"]),
+			pat = ["qc_ref", "qc_sim", "stat_1d", "stat_2d", "batch_res", "clust_res"]),
 	# plots
+		expand(
+			"plts/qc_ref-{fig}.{ext}",
+			fig = FIGS_QC_REF,
+			ext = ["rds", "pdf"]),
 		expand(
 			"plts/dimred_{reftyp}.pdf",
 			reftyp = ["n", "b", "k"]),
@@ -209,9 +221,7 @@ rule all:
 			reftyp = REFTYPS,
 			ext = ["rds", "pdf"]),
 		# figures
-		expand(
-			"figs/{fig}.pdf",
-			fig = glob_wildcards("code/08-fig_{x}.R").x)
+		expand("figs/{fig}.pdf", fig = FIGS)
 
 rule session_info:
 	priority: 99
@@ -319,25 +329,27 @@ rule dr_sim:
 rule qc_ref:
 	priority: 93
 	input: 	"code/05-calc_qc.R",
+			"code/utils-summaries.R",
 			"code/05-calc_qc-{metric}.R",
 			rules.sub_data.output
 	output:	"outs/qc_ref-{datset},{subset},{metric}.rds"
 	log:	"logs/qc_ref-{datset},{subset},{metric}.Rout"
 	shell:	'''
-	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	fun={input[1]} sce={input[2]} res={output}" {input[0]} {log}'''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards} uts={input[1]}\
+	fun={input[2]} sce={input[3]} res={output}" {input[0]} {log}'''
 
 # compute QC summaries for each simset = refset + method
 rule qc_sim:
 	priority: 93
 	input: 	"code/05-calc_qc.R",
+			"code/utils-summaries.R",
 			"code/05-calc_qc-{metric}.R",
 			rules.sim_data.output
 	output:	"outs/qc_sim-{datset},{subset},{method},{metric}.rds"
 	log:	"logs/qc_sim-{datset},{subset},{method},{metric}.Rout"
 	shell:	'''
-	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	fun={input[1]} sce={input[2]} res={output}" {input[0]} {log}'''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards} uts={input[1]}\
+	fun={input[2]} sce={input[3]} res={output}" {input[0]} {log}'''
 
 # EVALUATION ===================================================================
 
@@ -422,6 +434,30 @@ rule eval_batch_sim:
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	{input[1]} {input[2]} {output}" {input[0]} {log}'''
 
+# compute reduced dimensions for each integrated refset
+rule dr_batch_ref:
+	priority: 91
+	input: 	"code/06-dr_batch.R",
+			rules.sub_data.output,
+			rules.batch_ref.output
+	output:	"outs/dr_batch_ref-{datset},{subset},{batch_method}.rds"
+	log:	"logs/dr_batch_ref-{datset},{subset},{batch_method}.Rout"
+	shell:	'''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+	{input[1]} {input[2]} {output}" {input[0]} {log}'''
+
+# compute reduced dimensions for each integrated simset
+rule dr_batch_sim:
+	priority: 91
+	input: 	"code/06-dr_batch.R",
+			rules.sim_data.output,
+			rules.batch_sim.output
+	output:	"outs/dr_batch_sim-{datset},{subset},{method},{batch_method}.rds"
+	log:	"logs/dr_batch_sim-{datset},{subset},{method},{batch_method}.Rout"
+	shell:	'''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+	{input[1]} {input[2]} {output}" {input[0]} {log}'''
+
 # CLUSTERING ===================================================================
 
 # run each clustering method on each refset
@@ -453,6 +489,7 @@ rule clust_sim:
 rule eval_clust:
 	priority: 92
 	input: 	"code/06-eval_clust.R",
+			"code/utils-clustering.R",
 			sce = rules.sub_data.output,
 			ref = expand(
 				"outs/clust_ref-{{datset}},{{subset}},{clust_method}.rds",
@@ -466,8 +503,8 @@ rule eval_clust:
 	output:	"outs/clust_res-{datset},{subset}.rds"
 	log:	"logs/clust_res-{datset},{subset}.Rout"
 	shell:	'''
-	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	sce={input[1]} ref={params[0]} sim={params[1]} res={output}" {input[0]} {log}'''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards} uts={input[1]}\
+	sce={input[2]} ref={params[0]} sim={params[1]} res={output}" {input[0]} {log}'''
 
 # RUNTIMES =====================================================================
 
@@ -484,6 +521,14 @@ rule rts:
 	sce={input[1]} est={input[2]} sim={input[3]} res={output}" {input[0]} {log}'''
 
 # COLLECTION ===================================================================
+
+# QC summaries
+qc_ref = expand(
+	"outs/qc_ref-{refset},{metric}.rds",
+	refset = REFSETS, metric = METRICS)
+qc_sim = expand(
+	"outs/qc_sim-{simset},{metric}.rds",
+	simset = SIMSETS, metric = METRICS)
 
 # both 1D stats across all simsets & summaries
 res_stat1d =  expand(
@@ -554,6 +599,16 @@ res_clust = expand(
 	"outs/clust_res-{refset}.rds",
 	refset = REFSETS_TYP_K)
 
+# dimension reductions
+res_dr = expand([
+	"outs/dr_ref-{refset}.rds",
+	"outs/dr_sim-{refset},{method}.rds",
+	"outs/dr_batch_ref-{refset},{batch_method}.rds",
+	"outs/dr_batch_sim-{refset},{method},{batch_method}.rds"],
+	refset = REFSETS_TYP_B,
+	method = METHODS_TYP_B,
+	batch_method = METHODS_BATCH)
+
 # runtimes
 def rts_by_reftyp(wildcards):
 	return [x for x in res_rts if "rts_" + wildcards.reftyp in x]
@@ -567,6 +622,8 @@ def rts_by_reftyp(wildcards):
 
 data = {
 	"runtimes": res_rts,
+	"qc_ref": qc_ref,
+	"qc_sim": qc_sim,
 	"stat_1d": res_stat1d,
 	"stat_2d": res_stat2d,
 	"batch_res": res_batch,
@@ -585,7 +642,7 @@ rule write_fns:
 rule write_obj:
 	priority: 90
 	input:	"code/09-write_obj.R",
-			"code/utils.R",
+			"code/utils-plotting.R",
 			rules.write_fns.output
 	output:	"outs/obj-{pat}.rds"
 	log:	"logs/write_obj-{pat}.Rout"
@@ -595,10 +652,21 @@ rule write_obj:
 
 # PLOTS ========================================================================
 
+rule plot_qc_ref:
+	priority: 89
+	input:	"code/07-plot_qc_ref-{fig}.R",
+			"code/utils-plotting.R",
+			"outs/obj-qc_ref.rds"
+	output:	expand("plts/qc_ref-{{fig}}.{ext}", ext = ["rds", "pdf"])
+	log:	"logs/plot_qc_ref-{fig}.Rout"
+	shell:	'''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards} fun={input[1]}\
+	res={input[2]} rds={output[0]} pdf={output[1]}" {input[0]} {log}'''
+
 rule plot_rts:
 	priority: 89
 	input:	"code/07-plot_runtimes.R",
-			"code/utils.R",
+			"code/utils-plotting.R",
 			res = rts_by_reftyp
 	params:	lambda wc, input: ";".join(input.res)
 	output:	expand("plts/rts_{{reftyp}}.{ext}", ext = ["rds", "pdf"])
@@ -610,7 +678,7 @@ rule plot_rts:
 rule plot_dr:
 	priority: 89
 	input:	"code/07-plot_dimred.R",
-			"code/utils.R",
+			"code/utils-plotting.R",
 			ref = expand("outs/dr_ref-{refset}.rds", refset = REFSETS)
 	params:	lambda wc, input: ";".join(input.ref)
 	output:	"plts/dimred_{reftyp}.pdf"
@@ -623,7 +691,7 @@ rule plot_dr:
 rule plot_stat1d:
 	priority: 89
 	input:	"code/07-plot_stat_1d-{fig}.R",
-			"code/utils.R",
+			"code/utils-plotting.R",
 			"outs/obj-stat_1d.rds"
 	output:	expand("plts/stat_1d-{{fig}}.{ext}", ext = ["rds", "pdf"])
 	log:	"logs/plot_stat_1d-{fig}.Rout"
@@ -634,31 +702,29 @@ rule plot_stat1d:
 rule plot_stat_1d_by_stat1d:
 	priority: 89
 	input:	"code/07-plot_stat_1d_by_stat1d-{fig}.R",
-			"code/utils.R",
-			res = stat1d_by_stat1d
-	params:	lambda wc, input: ";".join(input.res)
+			"code/utils-plotting.R",
+			"outs/obj-stat_1d.rds"
 	output:	expand("plts/stat_1d_by_stat1d-{{fig}},{{stat1d}}.{ext}", ext = ["rds", "pdf"])
 	log:	"logs/plot_stat_1d_by_stat1d-{fig},{stat1d}.Rout"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	fun={input[1]} res={params} rds={output[0]} pdf={output[1]}" {input[0]} {log}'''
+	fun={input[1]} res={input[2]} rds={output[0]} pdf={output[1]}" {input[0]} {log}'''
 
 rule plot_stat_1d_by_reftyp:
 	priority: 89
 	input:	"code/07-plot_stat_1d_by_reftyp-{fig}.R",
-			"code/utils.R",
-			res = stat1d_by_reftyp
-	params:	lambda wc, input: ";".join(input.res)
+			"code/utils-plotting.R",
+			"outs/obj-stat_1d.rds"
 	output:	expand("plts/stat_1d_by_reftyp-{{fig}},{{reftyp}},{{stat1d}}.{ext}", ext = ["rds", "pdf"])
 	log:	"logs/plot_stat_1d_by_reftyp-{fig},{reftyp},{stat1d}.Rout"
 	shell:	'''
-	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
-	fun={input[1]} res={params} rds={output[0]} pdf={output[1]}" {input[0]} {log}'''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards} fun={input[1]}\
+	res={input[2]} rds={output[0]} pdf={output[1]}" {input[0]} {log}'''
 
 rule plot_stat2d:
 	priority: 89
 	input:	"code/07-plot_stat_2d-{fig}.R",
-			"code/utils.R",
+			"code/utils-plotting.R",
 			"outs/obj-stat_2d.rds"
 	output:	expand("plts/stat_2d-{{fig}}.{ext}", ext = ["rds", "pdf"])
 	log:	"logs/plot_stat_2d-{fig}.Rout"
@@ -669,7 +735,7 @@ rule plot_stat2d:
 rule plot_stat_2d_by_reftyp:
 	priority: 89
 	input:	"code/07-plot_stat_2d_by_reftyp-{fig}.R",
-			"code/utils.R",
+			"code/utils-plotting.R",
 			res = stat2d_by_reftyp
 	params:	lambda wc, input: ";".join(input.res)
 	output:	expand("plts/stat_2d_by_reftyp-{{fig}},{{reftyp}},{{stat2d}}.{ext}", ext = ["rds", "pdf"])
@@ -681,25 +747,39 @@ rule plot_stat_2d_by_reftyp:
 rule plot_batch:
 	priority: 89
 	input:	"code/07-plot_batch-{fig}.R",
-			"code/utils.R",
+			"code/utils-plotting.R",
+			"code/utils-integration.R",
 			res = res_batch
 	params:	lambda wc, input: ";".join(input.res)
 	output:	expand("plts/batch-{{fig}}_{{val}}.{ext}", ext = ["rds", "pdf"])
 	log:	"logs/plot_batch-{fig}_{val}.Rout"
 	shell:	'''
-	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards} fun={input[1]}\
+	{R} CMD BATCH --no-restore --no-save "--args\
+	wcs={wildcards} uts1={input[1]} uts2={input[2]}\
+	res={params} rds={output[0]} pdf={output[1]}" {input[0]} {log}'''
+
+rule plot_dr_batch:
+	priority: 89
+	input:	"code/07-plot_dimred_batch.R",
+			"code/utils-plotting.R",
+			res = res_dr
+	params:	lambda wc, input: ";".join(input.res)
+	output:	expand("plts/batch-dimred.{ext}", ext = ["rds", "pdf"])
+	log:	"logs/plot_dr_batch.Rout"
+	shell:	'''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards} uts={input[1]}\
 	res={params} rds={output[0]} pdf={output[1]}" {input[0]} {log}'''
 
 rule plot_clust:
 	priority: 89
 	input:	"code/07-plot_clust-{fig}.R",
-			"code/utils.R",
+			"code/utils-plotting.R",
 			res = res_clust
 	params:	lambda wc, input: ";".join(input.res)
 	output:	expand("plts/clust-{{fig}}.{ext}", ext = ["rds", "pdf"])
 	log:	"logs/plot_clust-{fig}.Rout"
 	shell:	'''
-	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards} fun={input[1]}\
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards} uts={input[1]}\
 	res={params} rds={output[0]} pdf={output[1]}" {input[0]} {log}'''
 
 # FIGURES ======================================================================
@@ -731,20 +811,28 @@ plts = {
 			"boxplot_dX_{val}",
 			"heatmap_by_method_{val}",
 			"correlations_{val}"],
-			val = "cms")),
+			val = ["cms", "ldf", "bcs"])),
 	"clustering": expand(
 		"plts/clust-{fig}.rds",
-		fig = ["boxplot_by_method", "boxplot_dF1", "heatmap_by_method", "correlations"])
+		fig = ["boxplot_by_method", "boxplot_dF1", "heatmap_by_method", "correlations"]),
+	"mds": expand(
+		"plts/stat_1d_by_reftyp-mds,{reftyp},ks.rds",
+		reftyp = REFTYPS),
+	"summaries": [
+		"plts/qc_ref-correlations.rds",
+		"plts/stat_1d_by_stat1d-correlations,ks.rds",
+        "plts/stat_1d_by_stat1d-mds,ks.rds",
+        "plts/stat_1d_by_reftyp-pca,n,ks.rds"]
 }
 
 rule figs:
 	priority: 1
 	input:	"code/08-fig_{fig}.R",
-			"code/utils.R",
+			"code/utils-plotting.R",
 			rds = lambda wildcards: plts[wildcards.fig]
 	params: lambda wc, input: ";".join(input.rds)
 	output:	"figs/{fig}.pdf"
 	log:	"logs/fig_{fig}.Rout"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args\
-	fun={input[1]} rds={params} pdf={output}" {input[0]} {log}'''
+	uts={input[1]} rds={params} pdf={output}" {input[0]} {log}'''

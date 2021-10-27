@@ -15,8 +15,8 @@ dfs <- args$res %>%
     filter(type == wcs$reftyp) %>% 
     group_split(refset) 
 
-# number of columns
-n <- 3 
+# number of rows & columns for facetting
+nc <- ceiling(length(dfs)/(nr <- 3))
 
 # get variable to color by
 # - log-library size (lls) for type n
@@ -36,9 +36,9 @@ fig <- lapply(seq_along(dfs), \(i) {
         legend.title = element_blank(),
         legend.justification = c(0, 0.5),
         plot.title = element_text(hjust = 0.5),
-        axis.title.x = if (i > length(dfs) - n) element_text() else element_blank(),
-        axis.title.y = if (i %% n != 1) element_blank() else element_text(angle = 90))
+        axis.title.x = if (i > length(dfs) - nc) element_text() else element_blank(),
+        axis.title.y = if (i %% nc != 1) element_blank() else element_text(angle = 90))
     .prettify(plt, thm)
-}) %>% wrap_plots(ncol = n)
+}) %>% wrap_plots(nrow = nr)
 
 ggsave(args$pdf, fig, width = 16, height = 4*length(dfs)/n, units = "cm")

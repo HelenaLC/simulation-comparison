@@ -1,29 +1,30 @@
+# wcs <- list(stat2d = "emd", reftyp = "b")
+# args <- list(
+#     fun = "code/utils-plotting.R",
+#     res = "outs/obj-stat_2d.rds",
+#     rds = "plts/stat_2d_by_reftyp-boxplot,b,ks2.rds",
+#     pdf = "plts/stat_2d_by_reftyp-boxplot,b,ks2.pdf")
+
 source(args$fun)
 res <- .read_res(args$res)
 
 df <-  res %>%
-    mutate(metrics = paste(metric1, metric2, sep = "\n")) %>% 
+     mutate(metrics = paste(metric1, metric2, sep = "\n")) %>% 
+    # except for KNN & global summaries,
+    # keep group-level comparisons only
+    { if (wcs$reftyp == "n") . else
+        mutate(., across(
+            c(group, id), 
+            as.character)) %>% 
+        filter(
+            (!grepl("KNN", metrics) & group != id) |
+            (grepl("KNN", metrics) & group == "global") |
+            any(c(metric1, metric2) %in% .metrics_lab[.none_metrics])) } %>% 
+    # aggregation
     group_by(method, metrics, group, datset, subset) %>% 
-    summarise_at("stat", mean) %>% # average across groups
-    summarise_at("stat", mean) %>% # average across subsets
-    summarise_at("stat", mean) %>% # average across datsets
-    # keep batch-/cluster-level comparisons only
-    mutate(n = n()) %>% filter(n == 1 | group != "global")
-
-if (wcs$reftyp != "n") 
-    # except for global summaries, keep 
-    # batch-/cluster-level comparisons only
-    df <- filter(df, group != "global")
-    
-if (wcs$reftyp == "g") 
-    df <- df %>% 
-    rowwise() %>% 
-    mutate(
-        group = as.character(group),
-        group = case_when(
-            group != "global" ~ "group", 
-            TRUE ~ group)) %>% 
-    ungroup()
+    summarize_at("stat", mean, na.rm = TRUE) %>% # average across groups
+    summarize_at("stat", mean, na.rm = TRUE) %>% # average across subsets
+    summarize_at("stat", mean, na.rm = TRUE)     # average across datsets
 
 # order methods by average across metrics
 ox <- df %>% 
@@ -39,7 +40,7 @@ oy <- df %>%
     arrange(desc(stat)) %>% 
     pull("metrics")
 
-df <- df %>% complete(method, metrics, fill = list(stat = NA))
+df <- complete(df, method, metrics, fill = list(stat = NA))
 
 plt <- ggplot(df, 
     aes(method, metrics, fill = stat)) +
@@ -47,7 +48,7 @@ plt <- ggplot(df,
     scale_fill_distiller(
         .stats2d_lab[wcs$stat2d],
         palette = "RdYlBu",
-        na.value = "lightgrey",
+        na.value = "grey",
         limits = c(0, 1), 
         breaks = c(0, 1)) +
     coord_equal(3/2, expand = FALSE) +

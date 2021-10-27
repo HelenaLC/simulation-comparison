@@ -1,9 +1,6 @@
-source(args$fun)
+source(args$uts)
 
-res <- .read_res(args$res) %>% 
-    mutate(refset = paste(datset, subset, sep = ",")) %>%
-    select(-c(datset, subset)) %>% 
-    rename(sim_method = method)
+res <- .read_res(args$res)
 
 # order according to average F1 score
 res$sim_method <- factor(
@@ -15,7 +12,7 @@ res$sim_method <- factor(
         pull("sim_method"))
 
 plt <- ggplot(res, aes(
-    reorder_within(clust_method, F1, sim_method), 
+    reorder_within(clust_method, -F1, sim_method, median), 
     F1, col = clust_method, fill = clust_method)) +
     facet_grid(~ sim_method, scales = "free_x") +
     geom_hline(yintercept = c(0, 1), size = 0.1) +

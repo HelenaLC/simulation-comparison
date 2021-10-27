@@ -1,44 +1,37 @@
+# wcs <- list(reftyp = "k", stat1d = "ks")
+# args <- list(
+#     fun = "code/utils-plotting.R",
+#     res = "outs/obj-stat_1d.rds",
+#     rds = sprintf("stat_1d_by_reftyp-boxplot,%s,%s.rds", wcs$reftyp, wcs$stat1d),
+#     pdf = sprintf("stat_1d_by_reftyp-boxplot,%s,%s.pdf", wcs$reftyp, wcs$stat1d))
+
 source(args$fun)
-res <- .read_res(args$res)
+res <- readRDS(args$res)
 
 df <- res %>%
-    group_by(metric, method, group, datset, subset) %>% 
-    summarize_at("stat", mean) %>% # average across groups
-    summarize_at("stat", mean) %>% # average across subsets
-    summarize_at("stat", mean)     # average across datsets
-
-if (wcs$reftyp != "n")
-    # except for global summaries, keep 
-    # batch-/cluster-level comparisons only
-    df <- filter(df,
-        (group != "global") |
-        (metric %in% .metrics_lab[.none_metrics]))
-
-if (wcs$reftyp == "g") 
-    df <- df %>% 
-    rowwise() %>% 
-    mutate(
-        group = as.character(group),
-        group = case_when(
-            group != "global" ~ "group", 
-            TRUE ~ group)) %>% 
-    ungroup()
+    # keep data of interest
+    filter(
+        reftyp == wcs$reftyp, 
+        stat1d == wcs$stat1d) %>%
+    .filter_res() %>% 
+    # for each method & summary, 
+    # average across groups & refsets
+    group_by(metric, method, refset, group) %>% .avg(n = 3) %>% 
+    complete(method, metric, fill = list(stat = NA))
 
 # order methods by average across metrics
 ox <- df %>% 
     group_by(method) %>% 
-    summarise_at("stat", mean) %>% 
+    summarise_at("stat", mean, na.rm = TRUE) %>% 
     arrange(desc(stat)) %>% 
     pull("method")
 
 # order metrics by average across methods
 oy <- df %>% 
     group_by(metric) %>% 
-    summarise_at("stat", mean) %>% 
+    summarise_at("stat", mean, na.rm = TRUE) %>% 
     arrange(desc(stat)) %>% 
     pull("metric")
-
-df <- df %>% complete(method, metric, fill = list(stat = NA))
 
 plt <- ggplot(df, 
     aes(method, metric, fill = stat)) +
@@ -46,7 +39,7 @@ plt <- ggplot(df,
     scale_fill_distiller(
         .stats1d_lab[wcs$stat1d],
         palette = "RdYlBu",
-        na.value = "lightgrey",
+        na.value = "grey",
         limits = c(0, 1),
         breaks = c(0, 1)) +
     coord_equal(expand = FALSE) +

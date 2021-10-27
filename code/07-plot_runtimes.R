@@ -1,13 +1,11 @@
 # args <- list(
-#     res = list.files("outs", "^rts_b-", full.names = TRUE),
 #     rds = "plts/rts_b.rds",
 #     pdf = "plts/rts_b.pdf",
-#     fun = "code/utils.R")
+#     fun = "code/utils-plotting.R",
+#     res = list.files("outs", "^rts_b-", full.names = TRUE))
 
 source(args$fun)
-
-res <- bind_rows(lapply(args$res, readRDS)) %>%
-    mutate(method = droplevels(factor(method, names(.methods_pal))))
+res <- .read_res(args$res)
 
 df <- res %>% 
     # sum up estimation & simulation timings
@@ -41,25 +39,53 @@ df <- res %>%
     group_by(method, step, dim, n) %>%
     summarise_at("t", mean)
 
-pal <- .methods_pal
-pal <- pal[levels(df$method)]
+pal <- .methods_pal[levels(df$method)]
 
-plt <- ggplot(df, aes(factor(n), t, col = method, fill = method)) +
+lab <- parse(text = paste(
+    sep = "~",
+    sprintf("bold(%s)", LETTERS), 
+    gsub("\\s", "~", names(pal))))
+
+anno <- df %>% 
+    group_by(step, dim) %>% 
+    #filter(n == min(n)) %>% 
+    mutate(letter = LETTERS[match(method, levels(method))])
+
+plt <- ggplot(df, aes(factor(n), t, 
+    col = method, fill = method)) +
     facet_grid(step ~ dim, scales = "free") +
-    geom_point(
-        position = position_dodge(width = 0.25),
-        shape = 21, size = 2, col = "white", stroke = 0.2) +
-    guides(fill = guide_legend(override.aes = list(stroke = 0))) +
-    geom_vline(
-        lty = 3, size = 0.25,
-        xintercept = seq(2, 4) - 0.5) +
-    scale_fill_manual(values = pal) +
-    scale_color_manual(values = pal) +
-    scale_y_log10("runtime(s)") +
-    xlab(NULL)
+    geom_point() +
+    geom_path(aes(group = method)) +
+    geom_label_repel(
+        data = anno, aes(label = letter), 
+        col = "white", segment.colour = "grey", size = 1.5) +
+    scale_fill_manual(values = pal, labels = lab) +
+    scale_color_manual(values = pal, labels = lab) +
+    scale_x_reordered(NULL) +
+    scale_y_log10("runtime(s)", expand = expansion(mult = 0.1))
+
+plt <- ggplot(df, aes(factor(n), t, 
+    col = method, fill = method)) +
+    facet_grid(step ~ dim, scales = "free") +
+    geom_bar(
+        width = 0.9, 
+        stat = "identity", 
+        position = "dodge") +
+    geom_text(data = anno, 
+        aes(label = letter, y = 0.1),
+        size = 1.5, color = "black",
+        position = position_dodge(0.9)) + 
+    scale_fill_manual(values = pal, labels = lab) +
+    scale_color_manual(values = pal, labels = lab) +
+    scale_x_reordered(NULL) +
+    scale_y_log10("runtime(s)", expand = expansion(mult = 0.1))
 
 thm <- theme(
-    panel.grid.major = element_line(size = 0.2, color = "lightgrey"))
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    legend.title = element_blank(),
+    legend.text = element_text(hjust = 0),
+    panel.grid.major.y = element_line(color = "grey"))
 
 fig <- .prettify(plt, thm)
 

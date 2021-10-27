@@ -1,34 +1,28 @@
 # wcs <- list(val = "cms")
 # args <- list(
-#     fun = "code/utils.R",
+#     uts1 = "code/utils-plotting.R",
+#     uts2 = "code/utils-integration.R",
 #     rds = paste0("plts/batch-heatmap_by_method_", wcs$val, ".rds"),
 #     pdf = paste0("plts/batch-heatmap_by_method_", wcs$val, ".pdf"),
 #     res = list.files("outs", "^batch_res", full.names = TRUE))
 
-source(args$fun)
+source(args$uts1)
+source(args$uts2)
 
-res <- .read_res(args$res) %>% 
-    mutate(refset = paste(datset, subset, sep = ",")) %>%
-    select(-c(datset, subset)) %>% 
-    rename(sim_method = method) %>% 
-    mutate(avg = (cms + abs(ldf)) / 2)
+res <- .read_res(args$res)
 
-fun <- \(.) summarise(.,
-    .groups = "drop_last",
-    across(c(cms, avg), mean), 
-    across(ldf, \(.) mean(abs(.))))
+df <- res %>% 
+    .cms_ldf() %>% 
+    .bcs(n = 1) # average across cells & batches
 
-mat <- res %>% 
-    group_by(sim_method, batch_method, refset, batch) %>% 
-    fun() %>% # average across cells
-    fun() %>% # average across batches
+mat <- df %>% 
     ungroup() %>% 
     pivot_wider(
         values_from = wcs$val,
         names_from = "sim_method",
-        id_cols = c("refset", "batch_method")) %>% 
+        id_cols = c("refset", "batch_method", "batch")) %>% 
     select(any_of(c("ref", names(.methods_pal)))) %>% 
-    cor(method = "pearson")
+    cor(method = "pearson", use = "pairwise.complete.obs")
 
 mat[is.na(mat)] <- 0
 xo <- rownames(mat)[hclust(dist(mat))$order]
@@ -47,19 +41,14 @@ df <- mat %>%
         from = factor(from, levels = yo)) %>% 
     filter(as.numeric(to) <= as.numeric(from))
 
-lab <- switch(wcs$val, 
-    cms = "CMS", 
-    ldf = expression(Delta~"LDF"),
-    avg = "Average\nscore")
-
+min <- floor(min(df$corr)/0.1)*0.1
 plt <- ggplot(df, aes(from, to, fill = corr)) +
     geom_tile() +
-    scale_fill_distiller(
-        expression(rho),
+    scale_fill_distiller("r",
         palette = "RdYlBu",
         na.value = "lightgrey",
         direction = -1,
-        limits = c(0, 1),
+        limits = c(min, 1),
         breaks = c(0, 1)) +
     coord_equal(expand = FALSE) +
     scale_x_discrete(limits = rev(xo)) 
