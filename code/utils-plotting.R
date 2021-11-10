@@ -48,12 +48,16 @@ suppressPackageStartupMessages({
     filter(
         # keep everything for type 'n'
         reftyp == "n" |
-        # keep all groupings for global & gene-level summaries
+        # keep all groupings for global summaries, 
+        # gene-level (-correlations), cell-level 
+        # (-log-library size & cell detection frequency
         .metric %in% .none_metrics |
-        .metric %in% .gene_metrics |
-        # for log-library size & 
-        # cell detection frequency, 
-        # group-level results only 
+        .metric %in% setdiff(.gene_metrics, "gene_cor") |
+        .metric %in% setdiff(.cell_metrics, c("cell_lls", "cell_frq")) |
+        # for gene-gene correlation, keep global only
+        (group == id & .metric == "gene_cor") |
+        # for log-library size & cell detection 
+        # frequency, keep group-level results only 
         (group != id & grepl("cell_(lls|frq)", .metric))) %>% 
     ungroup() %>% 
     select(-.metric) %>% 

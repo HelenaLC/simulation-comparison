@@ -1,13 +1,20 @@
+# wcs <- list(reftyp = "n")
 # args <- list(
-#     rds = "plts/rts_b.rds",
-#     pdf = "plts/rts_b.pdf",
+#     rds = sprintf("plts/rts_%s.rds", wcs$reftyp),
+#     pdf = sprintf("plts/rts_%s.pdf", wcs$reftyp),
 #     fun = "code/utils-plotting.R",
-#     res = list.files("outs", "^rts_b-", full.names = TRUE))
+#     res = list.files("outs", sprintf("^rts_%s-", wcs$reftyp), full.names = TRUE))
 
 source(args$fun)
 res <- .read_res(args$res)
 
 df <- res %>% 
+    # drop SCRIP estimation for 'reftyp' other than 'n'
+    # as there's none, it's just setting up parameters
+    { if (wcs$reftyp != "n")
+        mutate(., est = case_when(
+            method == "SCRIP" ~ NA_real_,
+            TRUE ~ est)) else . } %>%
     # sum up estimation & simulation timings
     rowwise() %>% 
     mutate(tot = {
@@ -48,7 +55,6 @@ lab <- parse(text = paste(
 
 anno <- df %>% 
     group_by(step, dim) %>% 
-    #filter(n == min(n)) %>% 
     mutate(letter = LETTERS[match(method, levels(method))])
 
 plt <- ggplot(df, aes(factor(n), t, 
@@ -68,8 +74,8 @@ plt <- ggplot(df, aes(factor(n), t,
     col = method, fill = method)) +
     facet_grid(step ~ dim, scales = "free") +
     geom_bar(
-        width = 0.9, 
-        stat = "identity", 
+        width = 0.9,
+        stat = "identity",
         position = "dodge") +
     geom_text(data = anno, 
         aes(label = letter, y = 0.1),
@@ -78,10 +84,10 @@ plt <- ggplot(df, aes(factor(n), t,
     scale_fill_manual(values = pal, labels = lab) +
     scale_color_manual(values = pal, labels = lab) +
     scale_x_reordered(NULL) +
-    scale_y_log10("runtime(s)", expand = expansion(mult = 0.1))
+    scale_y_log10("runtime(s)", 
+        expand = expansion(mult = 0.1))
 
 thm <- theme(
-    axis.text.x = element_blank(),
     axis.ticks.x = element_blank(),
     legend.title = element_blank(),
     legend.text = element_text(hjust = 0),
@@ -90,4 +96,4 @@ thm <- theme(
 fig <- .prettify(plt, thm)
 
 saveRDS(fig, args$rds)
-ggsave(args$pdf, fig, width = 16, height = 9, units = "cm")
+ggsave(args$pdf, fig, width = 18, height = 9, units = "cm")

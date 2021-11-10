@@ -5,6 +5,7 @@
 #     sim = "code/04-sim_data-SCRIP.R")
 
 suppressPackageStartupMessages({
+    library(R.utils)
     library(SingleCellExperiment)
 })
 
@@ -35,27 +36,53 @@ x <- x[
 
 sink(tempfile()) # suppress printing...
 
+# set time limit (s) until timeout
+t <- 1e4
+
 # time estimation 
 source(args$est)
-est <- tryCatch(
-    system.time(y <- fun(x))[[3]],
-    error = function(e) e)
-if (inherits(est, "error")) {
+est <- withTimeout(
+    {
+    tryCatch(
+        system.time(y <- fun(x))[[3]],
+        error = function(e) e)
+    }, 
+    timeout = t, 
+    onTimeout = "warning")
+
+if (is.character(est)) {
+    # timed out
+    est <- t
+} else if (inherits(est, "error")) {
     # Inf if estimation failed
     est <- Inf
 } else if (is.null(y)) {
     # NA if included in simulation
-    est <- NA
+    est <- NA_real_
+    # pass SCE to simulation
+    y <- x
 }
 
 # time simulation
 source(args$sim)
-sim <- tryCatch(
-    system.time(fun(y))[[3]],
-    error = function(e) e)
-if (inherits(sim, "error")) {
-    # Inf if simulation failed
+sim <- withTimeout(
+    {
+    tryCatch(
+        system.time(fun(y))[[3]],
+        error = function(e) e)
+    }, 
+    timeout = t, 
+    onTimeout = "warning")
+
+if (is.character(sim)) {
+    # timed out
+    sim <- t
+} else if (inherits(sim, "error")) {
+    # Inf if estimation failed
     sim <- Inf
+} else if (is.null(sim)) {
+    # NA if included in simulation
+    sim <- NA_real_
 }
 
 sink() # ...until here

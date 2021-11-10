@@ -113,7 +113,6 @@ FIGS_BATCH = glob_wildcards("code/07-plot_batch-{x}.R").x
 FIGS_CLUST = glob_wildcards("code/07-plot_clust-{x}.R").x
 
 FIGS = glob_wildcards("code/08-fig_{x}.R").x
-FIGS.remove("runtimes")
 
 # ==============================================================================
 

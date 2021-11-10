@@ -18,4 +18,4 @@ fig <- wrap_plots(ps, ncol = 1) +
         legend.title = element_blank(),
         plot.tag = element_text(size = 9, face = "bold"))
 
-ggsave(args$pdf, fig, width = 16, height = 18, units = "cm")
+ggsave(args$pdf, fig, width = 18, height = 21, units = "cm")
