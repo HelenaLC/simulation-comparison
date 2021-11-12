@@ -6,7 +6,6 @@ x <- c(
     "CellBench",
     "ExperimentHub",
     "GEOquery",
-    "intrinsicDimension",
     "scater",
     "scran",
     "SingleCellExperiment",
@@ -60,15 +59,13 @@ x <- c(
 # Bioconductor
     "ConsensusClusterPlus",
     "flowCore",
-    "FlowSOM",
     "monocle",
     "SC3",
-    "TSCAN",
 # CRAN
     "clue",
     "Rtsne",
 # GitHub
-    "VCCRI/CIDR",
+    "VCCRI/cidr",
     "JustinaZ/pcaReduce"
 )
 
