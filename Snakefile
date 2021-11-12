@@ -61,8 +61,6 @@ STATS2D = glob_wildcards("code/06-stat_2d-{x}.R").x
 # get intergation/clustering methods, type b/k refsets & simulators 
 METHODS_BATCH = glob_wildcards("code/05-calc_batch-{x}.R").x
 METHODS_CLUST = glob_wildcards("code/05-calc_clust-{x}.R").x
-METHODS_CLUST.remove("FlowSOM")
-METHODS_CLUST.remove("TSCAN")
 
 # split refsets, methods & simsets by type
 REFSETS_TYP_N = [r for r,t in REFSETS.items() if t == "n"]
@@ -118,7 +116,7 @@ FIGS = glob_wildcards("code/08-fig_{x}.R").x
 
 rule all:
 	input:
-		#"session_info.txt",
+		"session_info.txt",
 		expand([
 	# preprocessing
 			"data/00-raw/{datset}.rds",
