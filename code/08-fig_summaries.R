@@ -23,9 +23,8 @@ ps[[4]][[1]]$coordinates$expand <- TRUE
 ps[[4]][[2]]$layers <- ps[[4]][[2]]$layers[-4]
 ps[[4]][[2]] <- ps[[4]][[2]] +
     theme(
-        legend.position = c(1, 0.5),
-        legend.justification = c(1, 0.5),
-        legend.background = element_blank())
+        legend.position = c(0.95, 0.5),
+        legend.justification = c(1, 0.5))
 
 ps[[4]] <- ps[[4]] & theme(plot.tag = element_blank())
 ps[[4]] <- wrap_elements(full = ps[[4]])

@@ -821,7 +821,7 @@ plts = {
 		"plts/qc_ref-correlations.rds",
 		"plts/stat_1d_by_stat1d-correlations,ks.rds",
         "plts/stat_1d_by_stat1d-mds,ks.rds",
-        "plts/stat_1d_by_reftyp-pca,n,ks.rds"]
+        "plts/stat_1d_by_stat1d-pca,ks.rds"]
 }
 
 rule figs:
