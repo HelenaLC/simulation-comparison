@@ -5,9 +5,6 @@
 *.txt
 *.html
 
-supp/*
-shiny/*
-
 logs/*
 meta/*
 data/*
