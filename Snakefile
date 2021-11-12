@@ -184,7 +184,9 @@ rule all:
 		expand([
 			"outs/fns-{pat}.txt",
 			"outs/obj-{pat}.rds"],
-			pat = ["qc_ref", "qc_sim", "stat_1d", "stat_2d", "batch_res", "clust_res"]),
+			pat = [
+			"qc_ref", "qc_sim", "stat_1d", "stat_2d", 
+			"batch_res", "clust_res", "rts"]),
 	# plots
 		expand(
 			"plts/qc_ref-{fig}.{ext}",
@@ -620,13 +622,13 @@ def rts_by_reftyp(wildcards):
 # ------------------------------------------------------------------------------
 
 data = {
-	"runtimes": res_rts,
 	"qc_ref": qc_ref,
 	"qc_sim": qc_sim,
 	"stat_1d": res_stat1d,
 	"stat_2d": res_stat2d,
 	"batch_res": res_batch,
-	"clust_res": res_clust}
+	"clust_res": res_clust,
+	"rts": res_rts}
 
 rule write_fns:
 	priority: 90
