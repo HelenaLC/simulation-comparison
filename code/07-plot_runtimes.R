@@ -60,19 +60,6 @@ anno <- df %>%
 plt <- ggplot(df, aes(factor(n), t, 
     col = method, fill = method)) +
     facet_grid(step ~ dim, scales = "free") +
-    geom_point() +
-    geom_path(aes(group = method)) +
-    geom_label_repel(
-        data = anno, aes(label = letter), 
-        col = "white", segment.colour = "grey", size = 1.5) +
-    scale_fill_manual(values = pal, labels = lab) +
-    scale_color_manual(values = pal, labels = lab) +
-    scale_x_reordered(NULL) +
-    scale_y_log10("runtime(s)", expand = expansion(mult = 0.1))
-
-plt <- ggplot(df, aes(factor(n), t, 
-    col = method, fill = method)) +
-    facet_grid(step ~ dim, scales = "free") +
     geom_bar(
         width = 0.9,
         stat = "identity",
@@ -83,8 +70,7 @@ plt <- ggplot(df, aes(factor(n), t,
         position = position_dodge(0.9)) + 
     scale_fill_manual(values = pal, labels = lab) +
     scale_color_manual(values = pal, labels = lab) +
-    scale_x_reordered(NULL) +
-    scale_y_log10("runtime(s)", 
+    xlab(NULL) + scale_y_log10("runtime (s)", 
         expand = expansion(mult = 0.1))
 
 thm <- theme(

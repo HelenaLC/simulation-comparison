@@ -78,6 +78,7 @@ METHODS_BY_TYP = {
 
 rts_con = json.load(open("meta/runtimes.json"))
 res_rts = list()
+res_mbs = list()
 for refset,params in rts_con.items():
 	reftyp = params["type"]
 	methods = METHODS_BY_TYP[reftyp]
@@ -85,6 +86,7 @@ for refset,params in rts_con.items():
 		"{refset},{method}",
 		refset = refset,
 		method = methods)
+	# runtimes
 	res_rts += expand([
 		"outs/rts_{reftyp}-{simset},{ngs},x,{rep}.rds",
 		"outs/rts_{reftyp}-{simset},x,{ncs},{rep}.rds"],
@@ -93,6 +95,8 @@ for refset,params in rts_con.items():
 		ngs = params["n_genes"],
 		ncs = params["n_cells"],
 		rep = list(range(1, 6)))
+	# memory usage
+	res_mbs += [foo.replace("outs", "logs").replace("rds", "txt") for foo in res_rts]
 
 # get target figures
 FIGS_QC_REF = glob_wildcards("code/07-plot_qc_ref-{x}.R").x
@@ -216,8 +220,9 @@ rule all:
 		# runtimes
 		res_rts,
 		expand(
-			"plts/rts_{reftyp}.{ext}",
+			"plts/{plt}_{reftyp}.{ext}",
 			reftyp = REFTYPS,
+			plt = ["rts", "mbs"],
 			ext = ["rds", "pdf"]),
 		# figures
 		expand("figs/{fig}.pdf", fig = FIGS)
@@ -515,6 +520,7 @@ rule rts:
 			"code/04-sim_data-{method}.R"
 	output:	"outs/rts_{reftyp}-{datset},{subset},{method},{ngs},{ncs},{rep}.rds"
 	log:	"logs/rts_{reftyp}-{datset},{subset},{method},{ngs},{ncs},{rep}.Rout"
+	benchmark: "logs/rts_{reftyp}-{datset},{subset},{method},{ngs},{ncs},{rep}.txt"
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	sce={input[1]} est={input[2]} sim={input[3]} res={output}" {input[0]} {log}'''
@@ -612,6 +618,10 @@ res_dr = expand([
 def rts_by_reftyp(wildcards):
 	return [x for x in res_rts if "rts_" + wildcards.reftyp in x]
 
+# memory usage
+def mbs_by_reftyp(wildcards):
+	return [x for x in res_mbs if "rts_" + wildcards.reftyp in x]
+
 # ------------------------------------------------------------------------------
 # write out .rds objects of  
 # - quality control summaries
@@ -626,7 +636,8 @@ data = {
 	"stat_2d": res_stat2d,
 	"batch_res": res_batch,
 	"clust_res": res_clust,
-	"rts": res_rts}
+	"rts": res_rts,
+	"mbs": res_mbs}
 
 rule write_fns:
 	priority: 90
@@ -674,6 +685,18 @@ rule plot_rts:
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	fun={input[1]} res={params} rds={output[0]} pdf={output[1]}" {input[0]} {log}'''
 
+rule plot_mbs:
+	priority: 89
+	input:	"code/07-plot_memory.R",
+			"code/utils-plotting.R",
+			res = mbs_by_reftyp
+	params:	lambda wc, input: ";".join(input.res)
+	output:	expand("plts/mbs_{{reftyp}}.{ext}", ext = ["rds", "pdf"])
+	log:	"logs/plot_mbs-{reftyp}.Rout"
+	shell:	'''
+	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
+	fun={input[1]} res={params} rds={output[0]} pdf={output[1]}" {input[0]} {log}'''
+
 rule plot_dr:
 	priority: 89
 	input:	"code/07-plot_dimred.R",
@@ -685,7 +708,6 @@ rule plot_dr:
 	shell:	'''
 	{R} CMD BATCH --no-restore --no-save "--args wcs={wildcards}\
 	fun={input[1]} res={params} pdf={output}" {input[0]} {log}'''
-
 
 rule plot_stat1d:
 	priority: 89
@@ -792,6 +814,9 @@ plts = {
 		reftyp = REFTYPS, stat2d = STATS2D),
 	"runtimes": expand(
 		"plts/rts_{reftyp}.rds",
+		reftyp = REFTYPS),
+	"memory": expand(
+		"plts/mbs_{reftyp}.rds",
 		reftyp = REFTYPS),
 	"scatters": expand(
 		"plts/stat_{dim}d-scatters.rds",

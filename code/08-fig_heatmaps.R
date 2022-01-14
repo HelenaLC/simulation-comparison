@@ -2,9 +2,10 @@
 #     pdf = "figs/heatmaps.pdf",
 #     uts = "code/utils-plotting.R",
 #     rds = list.files("plts", "stat_(1|2)d_by_reftyp-heatmap.*ks2?\\.rds", full.names = TRUE))
-
-source(args$uts)
-ps <- lapply(fns <- args$rds, readRDS)
+# 
+# source(args$uts)
+# ps <- lapply(fns <- args$rds, readRDS)
+ps <- ps0
 
 # re-order by dimension & type
 dim <- gsub(".*(1|2)d.*", "\\1", fns)
@@ -86,7 +87,19 @@ hs <- c(
     1.5 + length(unique(ps[[5]]$data$metrics)))
 ws <- sapply(ps[1:3], \(.) nlevels(.$data$method))
 
-fig <- wrap_plots(ps, 
+x <- c("gene-level" = "red", "cell-level" = "blue", "global" = "green3")
+ps[[1]] <- ps[[1]] +
+    geom_point(
+        inherit.aes = FALSE,
+        data = data.frame(x), 
+        aes_string(
+            ps[[1]]$data$method[1], 
+            ps[[1]]$data$metric[1], 
+            col = "x"), alpha = 0) +
+    scale_color_manual("type of\nsummary", values = x) +
+    guides(color = guide_legend(order = 1, override.aes = list(alpha = 1))) 
+
+fig <- wrap_plots(ps,
     nrow = 2, heights = hs, widths = ws) +
     plot_layout(guides = "collect") +
     plot_annotation(tag_levels = "a") &
@@ -96,4 +109,5 @@ fig <- wrap_plots(ps,
         plot.margin = margin(l = 2, unit = "mm"),
         plot.tag = element_text(face = "bold", size = 9))
 
-ggsave(args$pdf, fig, width = 16, height = 12, units = "cm")
+fig
+#ggsave(args$pdf, fig, width = 16, height = 12, units = "cm")
