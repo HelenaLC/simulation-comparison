@@ -1,0 +1,18 @@
+{
+	"BASiCS": ["b"],
+	"ESCO": ["n", "b", "k"],
+	"hierarchicell": ["n", "b"],
+	"muscat": ["n", "b", "k"],
+	"POWSC": ["n", "k"],
+	"powsimR": ["n"],
+	"scDD": ["n"],
+	"scDesign": ["n"],
+	"scDesign2": ["n", "k"],
+	"SCRIP": ["n", "b", "k"],
+	"SPARSim": ["n", "b"],
+	"SPsimSeq": ["n", "b"],
+	"splatter": ["n", "b", "k"],
+	"SymSim": ["n", "b"],
+	"ZINB-WaVE": ["n", "b", "k"],
+	"zingeR": ["n"]
+}

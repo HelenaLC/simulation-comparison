@@ -6,7 +6,6 @@
 *.html
 
 logs/*
-meta/*
 data/*
 outs/*
 plts/*

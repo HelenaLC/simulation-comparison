@@ -1,0 +1,185 @@
+{
+	"CellBench": {
+		"H2228": {
+			"type": "b",
+			"n_cells": "400",
+			"n_genes": "4000",
+			"cluster": "H2228"
+		},
+		"CELSeq": {
+			"type": "k",
+			"n_cells": "400",
+			"n_genes": "4000",
+			"batch": "sc_celseq"
+		}
+	},
+	"Ding20": {
+		"10x.InhibNeuron": {
+			"type": "n",
+			"n_cells": null,
+			"n_genes": "4000",
+			"batch": "10x Chromium",
+			"cluster": "Inhibitory neuron"
+		},
+		"ExcitNeuron": {
+			"type": "b",
+			"n_cells": "200",
+			"n_genes": "4000",
+			"cluster": "Excitatory neuron"
+		},
+		"DroNcSeq": {
+			"type": "k",
+			"n_cells": "200",
+			"n_genes": "4000",
+			"batch": "DroNc-seq"
+		}
+	},
+	"Gierahn17" : {
+		"foo": {
+			"type": "n", 
+			"n_cells": null,
+			"n_genes": "4000"
+		}
+	},
+	"Kang18": {
+		"1015": {
+			"type": "k",
+			"n_cells": "400",
+			"n_genes": "4000",
+			"batch": "1015"
+		},
+		"B": {
+			"type": "n",
+			"n_cells": null,
+			"n_genes": "4000",
+			"batch": "1015",
+			"cluster": "B cells"
+		},
+		"NK": {
+			"type": "n",
+			"n_cells": null,
+			"n_genes": "4000",
+			"batch": "1015",
+			"cluster": "NK cells"
+		}
+	},
+	"Koh16": {
+		"foo": {
+			"type": "k",
+			"n_cells": null,
+			"n_genes": "4000"
+		}
+	},
+	"MCA20.gland": {
+		"T": {
+			"type": "b",
+			"n_cells": null,
+			"n_genes": 4000,
+			"cluster": "T cell_Cd8b1 high"
+		}
+	},
+	"MCA20.lung": {
+		"AT2": {
+			"type": "b",
+			"n_cells": null,
+			"n_genes": 4000,
+			"cluster": "AT2 Cell"
+		}
+	},
+	"Mereu20":{
+		"CD4T": {
+			"type": "b",
+			"n_cells": "200",
+			"n_genes": "4000",
+			"cluster": "CD4 T cells"
+		},
+		"ddSeq": {
+			"type": "k",
+			"n_cells": "400",
+			"n_genes": "4000",
+			"batch": "ddSEQ"
+		}
+	},
+	"Oetjen18": {
+		"R": {
+			"type": "n",
+			"n_cells": null,
+			"n_genes": "4000",
+			"batch": "R"
+		},
+		"foo": {
+			"type": "b",
+			"n_cells": "200",
+			"n_genes": "4000"
+		}
+	},
+	"panc8": {
+		"inDrop1.beta": {
+			"type": "n",
+			"n_cells": null,
+			"n_genes": "4000",
+			"batch": "indrop1",
+			"cluster": "beta"
+		},
+		"inDrop.ductal": {
+			"type": "b",
+			"n_cells": null,
+			"n_genes": "4000",
+			"batch": ["indrop1", "indrop2", "indrop3", "indrop4"],
+			"cluster": "ductal"
+		},
+		"SmartSeq2": {
+			"type": "k",
+			"n_cells": "400",
+			"n_genes": "4000",
+			"batch": "smartseq2"
+		}
+	},
+	"TabulaMuris": {
+		"limb.MSCs": {
+			"type": "n",
+			"n_cells": null,
+			"n_genes": "4000",
+			"tissue": "Limb_Muscle",
+			"cluster": "mesenchymal stem cell"
+		},
+		"spleen": {
+			"type": "k",
+			"n_cells": "400",
+			"n_genes": "4000",
+			"tissue": "Spleen"
+		}
+	},
+	"Tung17": {
+		"foo": {
+			"type": "b",
+			"n_cells": "400",
+			"n_genes": "4000"
+		},
+		"NA19101": {
+			"type": "n",
+			"n_cells": null,
+			"n_genes": "4000",
+			"batch": "NA19101"
+		}
+	},
+	"Zheng17": {
+		"foo": {
+			"type": "k",
+			"n_cells": "400",
+			"n_genes": "4000"
+		},
+		"HSCs": {
+			"type": "n",
+			"n_cells": null,
+			"n_genes": "4000",
+			"cluster": "HSCs CD34+"
+		},
+		"Monocytes": {
+			"type": "n",
+			"n_cells": "400",
+			"n_genes": "4000",
+			"cluster": "Monocytes CD14+"
+		}
+	}
+}
