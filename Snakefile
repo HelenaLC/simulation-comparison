@@ -818,6 +818,10 @@ plts = {
 	"memory": expand(
 		"plts/mbs_{reftyp}.rds",
 		reftyp = REFTYPS),
+	"scalability": expand(
+		"plts/{which}_{reftyp}.rds",
+		which = ["rts", "mbs"],
+		reftyp = REFTYPS),
 	"scatters": expand(
 		"plts/stat_{dim}d-scatters.rds",
 		dim = ["1", "2"]),

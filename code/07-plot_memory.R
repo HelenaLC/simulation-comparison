@@ -36,11 +36,20 @@ df <- data.frame(mbs, reftyp, refset, vars) %>%
     group_by(method, dim, n) %>%
     summarise_at("mbs", mean)
 
+# order methods by average across subsets
+ms <- df %>% 
+    group_by(method) %>% 
+    summarise_at("mbs", mean) %>% 
+    arrange(mbs) %>% pull("method")
+df$method <- factor(df$method, levels = ms)
+
 pal <- .methods_pal[levels(df$method)]
+
 lab <- parse(text = paste(
     sep = "~",
     sprintf("bold(%s)", LETTERS), 
     gsub("\\s", "~", names(pal))))
+
 anno <- mutate(df, letter = LETTERS[
     match(method, levels(method))])    
 

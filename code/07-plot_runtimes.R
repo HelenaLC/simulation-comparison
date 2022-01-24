@@ -46,6 +46,14 @@ df <- res %>%
     group_by(method, step, dim, n) %>%
     summarise_at("t", mean)
 
+# order methods by overall average across subsets
+ms <- df %>% 
+    filter(step == "overall") %>% 
+    group_by(method) %>% 
+    summarise_at("t", mean) %>% 
+    arrange(t) %>% pull("method")
+df$method <- factor(df$method, levels = ms)
+
 pal <- .methods_pal[levels(df$method)]
 
 lab <- parse(text = paste(
@@ -65,13 +73,13 @@ plt <- ggplot(df, aes(factor(n), t,
         stat = "identity",
         position = "dodge") +
     geom_text(data = anno, 
-        aes(label = letter, y = 0.1),
-        size = 1.5, color = "black",
+        aes(label = letter, y = 0),
+        size = 1.5, vjust = 2, color = "black",
         position = position_dodge(0.9)) + 
     scale_fill_manual(values = pal, labels = lab) +
     scale_color_manual(values = pal, labels = lab) +
-    xlab(NULL) + scale_y_log10("runtime (s)", 
-        expand = expansion(mult = 0.1))
+    xlab(NULL) + scale_y_sqrt("runtime (s)", 
+        expand = expansion(mult = c(0.2, 0.1)))
 
 thm <- theme(
     axis.ticks.x = element_blank(),
