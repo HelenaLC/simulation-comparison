@@ -11,7 +11,7 @@
 	"SCRIP": ["n", "b", "k"],
 	"SPARSim": ["n", "b"],
 	"SPsimSeq": ["n", "b"],
-	"splatter": ["n", "b", "k"],
+	"splatter": ["n"],
 	"SymSim": ["n", "b"],
 	"ZINB-WaVE": ["n", "b", "k"],
 	"zingeR": ["n"]
