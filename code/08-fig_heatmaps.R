@@ -2,10 +2,9 @@
 #     pdf = "figs/heatmaps.pdf",
 #     uts = "code/utils-plotting.R",
 #     rds = list.files("plts", "stat_(1|2)d_by_reftyp-heatmap.*ks2?\\.rds", full.names = TRUE))
-# 
-# source(args$uts)
-# ps <- lapply(fns <- args$rds, readRDS)
-ps <- ps0
+
+source(args$uts)
+ps <- lapply(fns <- args$rds, readRDS)
 
 # re-order by dimension & type
 dim <- gsub(".*(1|2)d.*", "\\1", fns)
@@ -109,5 +108,4 @@ fig <- wrap_plots(ps,
         plot.margin = margin(l = 2, unit = "mm"),
         plot.tag = element_text(face = "bold", size = 9))
 
-fig
-#ggsave(args$pdf, fig, width = 16, height = 12, units = "cm")
+ggsave(args$pdf, fig, width = 16, height = 12, units = "cm")

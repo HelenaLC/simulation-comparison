@@ -32,17 +32,16 @@ df <- mat %>%
         from = factor(from, levels = yo)) %>% 
     filter(as.numeric(to) <= as.numeric(from))
 
-min <- floor(min(df$corr)/0.1)*0.1
-plt <- ggplot(df, aes(from, to, fill = corr)) +
+fd <- filter(df, from != to)
+min <- floor(min(fd$corr)/0.1)*0.1
+max <- ceiling(max(fd$corr)/0.1)*0.1
+plt <- ggplot(fd, aes(from, to, fill = corr)) +
     geom_tile() +
-    scale_fill_distiller("r",
-        palette = "RdYlBu",
-        na.value = "lightgrey",
-        direction = -1,
-        limits = c(min, 1),
-        breaks = c(0, 1)) +
+    scale_fill_gradientn("r",
+        colors = rev(hcl.colors(11, "Grays")),
+        limits = c(min, max), breaks = c(min, max)) +
     coord_equal(expand = FALSE) +
-    scale_x_discrete(limits = rev(xo)) 
+    scale_x_discrete(limits = rev(xo[-1])) 
 
 fy <- c("plain", "bold")[as.numeric(levels(df$to) == "ref") + 1]
 fx <- c("plain", "bold")[as.numeric(rev(levels(df$from)) == "ref") + 1]
